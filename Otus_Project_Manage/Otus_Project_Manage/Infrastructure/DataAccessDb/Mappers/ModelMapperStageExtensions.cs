@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -11,6 +8,9 @@ namespace Otus_Project_Manage
     {
         public static TaskStage MapFromModel(this TaskStageModel stageModel)
         {
+            if (stageModel == null)
+                return null;
+
             return new TaskStage()
             {
                 stageId = stageModel.stageId,
@@ -18,14 +18,16 @@ namespace Otus_Project_Manage
                 comment = stageModel.comment,
                 description = stageModel.description,
                 status = stageModel.status,
-                task = stageModel.task,
-                user = stageModel.user,
-                nextStage = stageModel.nextStage
+                user = stageModel.user.MapFromModel(),
+                nextStage = stageModel.nextStage.MapFromModel()
             };
         }
 
         public static TaskStageModel MapToModel(this TaskStage stage)
         {
+            if (stage == null)
+                return null;
+
             return new TaskStageModel()
             {
                 stageId = stage.stageId,
@@ -33,9 +35,8 @@ namespace Otus_Project_Manage
                 comment = stage.comment,
                 description = stage.description,
                 status = stage.status,
-                task = stage.task,
-                user = stage.user,
-                nextStage = stage.nextStage
+                userId = stage.user.userId,
+                nextStageId = stage.nextStage != null ? stage.nextStage.stageId : null
             };
         }
 
@@ -51,8 +52,10 @@ namespace Otus_Project_Manage
             return Task.FromResult(stages);
         }
 
-        public static Task<List<TaskStageModel>> MapToModelListAsync(this Task<List<TaskStage>> stages)
+        public static Task<List<TaskStageModel>> MapToModelListAsync(this Task<List<TaskStage>> stages, CancellationToken ct)
         {
+            ct.ThrowIfCancellationRequested();
+
             List<TaskStageModel> stagesModel = new List<TaskStageModel>();
 
             foreach (var stage in stages.Result)

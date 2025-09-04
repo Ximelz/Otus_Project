@@ -67,11 +67,13 @@ namespace Otus_Project_Manage
                     {
                         Guid.TryParse(userScenario.Data["TeamId"].ToString(), out teamId);
                         team = await teamService.GetTeamById(teamId, telegramMessageService.ct);
-
+                        ProjectUser user;
                         foreach (KeyValuePair<UserRole, ProjectUser> keyValuePair in team.usersInTeam)
                         {
-                            keyValuePair.Value.role = UserRole.None;
-                            keyValuePair.Value.team = null;
+                            user = keyValuePair.Value;
+                            user.role = UserRole.None;
+                            user.team = null;
+                            await userService.UpdateUser(user, telegramMessageService.ct);
                         }
 
                         await teamService.DeleteTeam(teamId, telegramMessageService.ct);

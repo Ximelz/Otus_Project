@@ -61,8 +61,10 @@ namespace Otus_Project_Manage
                                            InlineKeyboardButton.WithCallbackData("Да", $"AcceptDeleteProject|{projectId}"),
                                            InlineKeyboardButton.WithCallbackData("Нет", $"CancelDeleteProject|{projectId}")});
 
-                    await telegramMessageService.SendMessageWithKeyboard("Вы хоиите удалить проект?", keyboard);
+                    await telegramMessageService.SendMessageWithKeyboard("Вы хотите удалить проект?", keyboard);
 
+                    userScenario.currentStep = "DeleteProject";
+                    userScenario.scenarioStatus = ScenarioStatus.InProcess;
                     return userScenario.scenarioStatus;
                 case "DeleteProject":
                     if (callbackQueryData.Command == "AcceptDeleteProject")

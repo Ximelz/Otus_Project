@@ -115,45 +115,59 @@ namespace Otus_Project_Manage
                 case "/start":
                     await onMessageService.StartBot(telegramMessageService);
                     break;
-                //case "/showprojects":
-                //    if (telegramMessageService.user.isAdmin)
-                //        await onMessageService.AddProjectTask(botClient, update, user, ct);
-                //    break;
-                //case "/showprojecttasks":
-                //    if (user.role == UserRole.ProjectLead)
-                //        await onMessageService.AddProjectTask(botClient, update, user, ct);
-                //    break;
-                //case "/addtasktoproject":
-                //    if (user.role == UserRole.ProjectLead)
-                //        await onMessageService.AddProjectTask(botClient, update, user, ct);
-                //    break;
-                case "/showteamtasks":
-                    if (telegramMessageService.user.role == UserRole.TeamLead)
-                        await onMessageService.ShowTeamTasks(telegramMessageService);
-                    break;
-                case "/showmytasks":
-                    if (telegramMessageService.user.role != UserRole.None)
-                        await onMessageService.ShowMyTasks(telegramMessageService);
+                case "/showprojects":
+                    if (telegramMessageService.user.project != null)
+                        await onMessageService.ShowProjects(telegramMessageService);
+                    else
+                        await telegramMessageService.SendMessage("Вы не являетесь руководителем проекта.");
                     break;
                 case "/adminconsole":
                     if (telegramMessageService.user.isAdmin)
                         await onMessageService.AdminConsole(telegramMessageService);
+                    else
+                        await telegramMessageService.SendMessage("У вас нет прав администратора.");
+                    break;
+                case "/showteamtasks":
+                    if (telegramMessageService.user.role == UserRole.TeamLead)
+                        await onMessageService.ShowTeamTasks(telegramMessageService);
+                    else
+                        await telegramMessageService.SendMessage("Вы не являетесь лидером команды.");
+                    break;
+                case "/showmytasks":
+                    if (telegramMessageService.user.role != UserRole.None)
+                        await onMessageService.ShowMyTasks(telegramMessageService);
+                    else
+                        await telegramMessageService.SendMessage("Вы не зарегистрированны.");
+                    break;
+                case "/showAllprojects":
+                    if (telegramMessageService.user.isAdmin)
+                        await onMessageService.ShowAllProjects(telegramMessageService);
+                    else
+                        await telegramMessageService.SendMessage("У вас нет прав администратора.");
                     break;
                 case "/registerUser":
                     if (telegramMessageService.user.isAdmin)
                         await onMessageService.RegisterUser(telegramMessageService);
+                    else
+                        await telegramMessageService.SendMessage("У вас нет прав администратора.");
                     break;
                 case "/showUsers":
                     if (telegramMessageService.user.isAdmin)
                         await onMessageService.ShowUsers(telegramMessageService);
+                    else
+                        await telegramMessageService.SendMessage("У вас нет прав администратора.");
                     break;
                 case "/showTeams":
                     if (telegramMessageService.user.isAdmin)
                         await onMessageService.ShowTeams(telegramMessageService);
+                    else
+                        await telegramMessageService.SendMessage("У вас нет прав администратора.");
                     break;
                 case "/exitAdminConsole":
                     if (telegramMessageService.user.isAdmin)
                         await onMessageService.ExitAdminConsole(telegramMessageService);
+                    else
+                        await telegramMessageService.SendMessage("У вас нет прав администратора.");
                     break;
                 default:
                     await telegramMessageService.SendMessage("Введена неверная команда!");
@@ -185,16 +199,21 @@ namespace Otus_Project_Manage
             {
                 case "addTeamTask":
                     if (telegramMessageService.user.role == UserRole.TeamLead)
-                        await onCallbackQueryService.AddTeamTask(telegramMessageService, callbackData);
+                        scenarioData = await onCallbackQueryService.AddTeamTask(telegramMessageService, callbackData);
+                    else
+                        await telegramMessageService.SendMessage("У вас нет прав администратора.");
                     break;
                 case "deleteTeamTask":
-                    await onCallbackQueryService.DeleteTeamTask(telegramMessageService, callbackData);
+                    if (telegramMessageService.user.isAdmin)
+                        await onCallbackQueryService.DeleteTeamTask(telegramMessageService, callbackData);
+                    else
+                        await telegramMessageService.SendMessage("У вас нет прав администратора.");
                     break;
                 case "showTask":
                     await onCallbackQueryService.ShowTask(telegramMessageService, callbackData);
                     break;
-                case "showStep":
-                    await onCallbackQueryService.ShowStep(telegramMessageService, callbackData);
+                case "showStage":
+                    await onCallbackQueryService.ShowStage(telegramMessageService, callbackData);
                     break;
                 case "completeStage":
                     scenarioData = await onCallbackQueryService.CompleteStage(telegramMessageService, callbackData);
@@ -206,45 +225,80 @@ namespace Otus_Project_Manage
                     await onCallbackQueryService.ShowUser(telegramMessageService, callbackData);
                     break;
                 case "deleteUser":
-                    scenarioData = await onCallbackQueryService.DeleteUser(telegramMessageService, callbackData);
+                    if (telegramMessageService.user.isAdmin)
+                        scenarioData = await onCallbackQueryService.DeleteUser(telegramMessageService, callbackData);
+                    break;
+                case "registeredUser":
+                    if (telegramMessageService.user.isAdmin)
+                        scenarioData = await onCallbackQueryService.RegisteredUser(telegramMessageService, callbackData);
+                    else
+                        await telegramMessageService.SendMessage("У вас нет прав администратора.");
                     break;
                 case "changeUserTeam":
-                    scenarioData = await onCallbackQueryService.ChangeUserTeam(telegramMessageService, callbackData);
+                    if (telegramMessageService.user.isAdmin)
+                        scenarioData = await onCallbackQueryService.ChangeUserTeam(telegramMessageService, callbackData);
+                    else
+                        await telegramMessageService.SendMessage("У вас нет прав администратора.");
                     break;
                 case "changeUserRole":
-                    scenarioData = await onCallbackQueryService.ChageUserRole(telegramMessageService, callbackData);
+                    if (telegramMessageService.user.isAdmin)
+                        scenarioData = await onCallbackQueryService.ChageUserRole(telegramMessageService, callbackData);
+                    else
+                        await telegramMessageService.SendMessage("У вас нет прав администратора.");
                     break;
                 case "showTeam":
                     await onCallbackQueryService.ShowTeam(telegramMessageService, callbackData);
                     break;
                 case "deleteTeam":
-                    scenarioData = await onCallbackQueryService.DeleteTeam(telegramMessageService, callbackData);
+                    if (telegramMessageService.user.isAdmin)
+                        scenarioData = await onCallbackQueryService.DeleteTeam(telegramMessageService, callbackData);
+                    else
+                        await telegramMessageService.SendMessage("У вас нет прав администратора.");
                     break;
                 case "addTeam":
                     scenarioData = await onCallbackQueryService.AddTeam(telegramMessageService, callbackData);
                     break;
                 case "renameTeam":
-                    scenarioData = await onCallbackQueryService.RenameTeam(telegramMessageService, callbackData);
+                    if (telegramMessageService.user.isAdmin)
+                        scenarioData = await onCallbackQueryService.RenameTeam(telegramMessageService, callbackData);
+                    else
+                        await telegramMessageService.SendMessage("У вас нет прав администратора.");
                     break;
                 case "addProject":
                     if (telegramMessageService.user.isAdmin)
                         scenarioData = await onCallbackQueryService.AddProject(telegramMessageService, callbackData);
+                    else
+                        await telegramMessageService.SendMessage("У вас нет прав администратора.");
                     break;
                 case "showProject":
                     if (telegramMessageService.user.project != null)
                         await onCallbackQueryService.ShowProject(telegramMessageService, callbackData);
+                    else
+                        await telegramMessageService.SendMessage("Вы не являетесь руководителем проекта.");
+                    break;
+                case "showProjectTasks":
+                    if (telegramMessageService.user.project != null)
+                        await onCallbackQueryService.ShowProjectTasks(telegramMessageService, callbackData);
+                    else
+                        await telegramMessageService.SendMessage("Вы не являетесь руководителем проекта.");
                     break;
                 case "addTaskInProject":
                     if (telegramMessageService.user.project != null)
                         scenarioData = await onCallbackQueryService.AddTaskInProject(telegramMessageService, callbackData);
+                    else
+                        await telegramMessageService.SendMessage("Вы не являетесь руководителем проекта.");
                     break;
                 case "completeProject":
                     if (telegramMessageService.user.project != null)
                         scenarioData = await onCallbackQueryService.CompleteProject(telegramMessageService, callbackData);
+                    else
+                        await telegramMessageService.SendMessage("Вы не являетесь руководителем проекта.");
                     break;
                 case "deleteProject":
                     if (telegramMessageService.user.isAdmin)
                         scenarioData = await onCallbackQueryService.DeleteProject(telegramMessageService, callbackData);
+                    else
+                        await telegramMessageService.SendMessage("У вас нет прав администратора.");
                     break;
                 default:
                     await telegramMessageService.SendMessage("Введена неверная команда!");

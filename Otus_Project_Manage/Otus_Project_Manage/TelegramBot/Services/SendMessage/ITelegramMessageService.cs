@@ -64,12 +64,5 @@ namespace Otus_Project_Manage
         /// Установка команд у пользователя в выпадающем меню.
         /// </summary>
         Task SetUserCommands();
-
-        /// <summary>
-        /// Метод отправки сообщения конкретному пользователю.
-        /// </summary>
-        /// <param name="message">Сообщение.</param>
-        /// <param name="user">Пользователь, которому нужно отправить сообщение.</param>
-        Task SendMessageToUser(string message, ProjectUser user);
     }
 }

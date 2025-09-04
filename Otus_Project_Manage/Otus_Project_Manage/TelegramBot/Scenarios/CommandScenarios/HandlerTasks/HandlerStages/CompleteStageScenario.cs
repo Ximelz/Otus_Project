@@ -59,11 +59,7 @@ namespace Otus_Project_Manage
                             task.activeStage.comment = commit;
                             task.activeStage.status = TaskStatus.Completed;
                             if (task.activeStage.nextStage != null)
-                            {
                                 task.activeStage = task.activeStage.nextStage;
-                                await telegramMessageService.SendMessageToUser($"К вам на исполнение пришел этап \"{task.activeStage.name}\" задачи \"{task.taskName}\".\r\n" +
-                                                                               $"Комментарий к предыдущему этапу: \"{commit}\".", task.activeStage.user);
-                            }
                             else
                                 task.status = TaskStatus.Completed;
 

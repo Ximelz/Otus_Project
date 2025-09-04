@@ -12,11 +12,13 @@ namespace Otus_Project_Manage
 {
     public class AddTaskScenario : IScenario
     {
-        public AddTaskScenario(ITaskService taskService)
+        public AddTaskScenario(ITaskService taskService, ITeamService teamService)
         {
             this.taskService = taskService;
+            this.teamService = teamService;
         }
-        readonly ITaskService taskService;
+        private readonly ITaskService taskService;
+        private readonly ITeamService teamService;
         public ScenarioTypes ScenarioType => ScenarioTypes.AddTask;
 
         public async Task<ScenarioStatus> HandleScanarioAsync(ITelegramMessageService telegramMessageService, UserScenarioData userScenario)
@@ -82,7 +84,7 @@ namespace Otus_Project_Manage
                         return userScenario.scenarioStatus;
                     case "EnterDeadline":
                         string format = "dd.MM.yyyy";
-                        if (DateTime.TryParseExact(inputMessage, format, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime deadline))
+                        if (!DateTime.TryParseExact(inputMessage, format, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime deadline))
                         {
                             await telegramMessageService.SendMessage("Введен неверный формат даты!");
                             return ScenarioStatus.InProcess;
@@ -125,15 +127,16 @@ namespace Otus_Project_Manage
 
                     ProjectTask newTask = new ProjectTask(taskName, taskDeadline, taskDescription);
                     newTask.status = TaskStatus.Active;
-                    newTask.team = telegramMessageService.user.team;
+                    var team = await teamService.GetTeamById(telegramMessageService.user.team.teamId, telegramMessageService.ct);
                     newTask.activeStage = newTask.firstStage;
+                    newTask.team = team;
 
                     newTask.firstStage = new TaskStage()
                     {
                         name = "Разработка",
                         description = stageFirstDescription,
                         status = TaskStatus.Active,
-                        user = telegramMessageService.user.team.usersInTeam[UserRole.Developer],
+                        user = team.usersInTeam[UserRole.Developer],
                         task = newTask
                     };
 
@@ -142,7 +145,7 @@ namespace Otus_Project_Manage
                         name = "Испытание",
                         description = stageSecondDescription,
                         status = TaskStatus.Active,
-                        user = telegramMessageService.user.team.usersInTeam[UserRole.Tester],
+                        user = team.usersInTeam[UserRole.Tester],
                         task = newTask
                     };
 
@@ -151,11 +154,12 @@ namespace Otus_Project_Manage
                         name = "Проверка",
                         description = stageThirdDescription,
                         status = TaskStatus.Active,
-                        user = telegramMessageService.user.team.usersInTeam[UserRole.TeamLead],
+                        user = team.usersInTeam[UserRole.TeamLead],
                         task = newTask
                     };
 
                     await taskService.AddTask(newTask, telegramMessageService.ct);
+                    await telegramMessageService.SendMessage("Задача создана!");
                     userScenario.scenarioStatus = ScenarioStatus.Completed;
                 }
                 else if (callbackQueryData.Command == "CancelAddTask")

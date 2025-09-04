@@ -14,7 +14,7 @@ namespace Otus_Project_Manage
         /// Id этапа.
         /// </summary>
         [Column("stageId"), PrimaryKey]
-        public Guid stageId = Guid.NewGuid();
+        public Guid stageId;
 
         /// <summary>
         /// Наименование этапа.
@@ -41,33 +41,27 @@ namespace Otus_Project_Manage
         public TaskStatus status;
 
         /// <summary>
-        /// Id задачи.
-        /// </summary>
-        [Column("taskId"), NotNull]
-        public Guid taskId;
-
-        /// <summary>
         /// Id исполнителя этапа.
         /// </summary>
         [Column("userId"), NotNull]
         public Guid userId;
 
         /// <summary>
-        /// Задача этого этапа.
+        /// Id следующего этапа.
         /// </summary>
-        [Association(ThisKey = nameof(taskId), OtherKey = nameof(ProjectTaskModel.taskId))]
-        public ProjectTask task;
+        [Column("nextStageId")]
+        public Guid? nextStageId;
 
         /// <summary>
         /// Исполнитель этапа.
         /// </summary>
         [Association(ThisKey = nameof(userId), OtherKey = nameof(ProjectUserModel.userId))]
-        public ProjectUser user;
+        public ProjectUserModel user;
 
         /// <summary>
         /// Следующий этап.
         /// </summary>
-        [Association(ThisKey = nameof(stageId), OtherKey = nameof(TaskStageModel.stageId))]
-        public TaskStage? nextStage;
+        [Association(ThisKey = nameof(nextStageId), OtherKey = nameof(TaskStageModel.stageId))]
+        public TaskStageModel? nextStage;
     }
 }

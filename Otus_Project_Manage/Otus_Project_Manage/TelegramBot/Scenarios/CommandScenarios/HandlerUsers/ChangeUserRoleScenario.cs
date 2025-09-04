@@ -11,11 +11,13 @@ namespace Otus_Project_Manage
     /// </summary>
     public class ChangeUserRoleScenario : IScenario
     {
-        public ChangeUserRoleScenario(IUserService userService)
+        public ChangeUserRoleScenario(IUserService userService, ITeamService teamService)
         {
             this.userService = userService;
+            this.teamService = teamService;
         }
         private readonly IUserService userService;
+        private readonly ITeamService teamService;
         public ScenarioTypes ScenarioType => ScenarioTypes.ChangeUserRole;
 
         public async Task<ScenarioStatus> HandleScanarioAsync(ITelegramMessageService telegramMessageService, UserScenarioData userScenario)
@@ -33,7 +35,7 @@ namespace Otus_Project_Manage
             UserRole newRole;
             InlineKeyboardMarkup keyboard;
             List<UserRole> roles;
-            var user = await userService.GetUserByTelegramId(userScenario.userId, telegramMessageService.ct);
+            ProjectUser changeUser;
 
             switch (userScenario.currentStep)
             {
@@ -53,13 +55,17 @@ namespace Otus_Project_Manage
 
                     roles = new List<UserRole>();
 
-                    foreach (var userRole in Enum.GetValues(typeof(UserRole)))
-                        if (!user.team.usersInTeam.ContainsKey((UserRole)userRole))
-                            roles.Add((UserRole)userRole);
+                    changeUser = await userService.GetUserByUserId(userId, telegramMessageService.ct);
+
+                    var team = await teamService.GetTeamById(changeUser.team.teamId, telegramMessageService.ct);
+                    
+                    foreach (var userRole in Enum.GetValues<UserRole>())
+                        if (!team.usersInTeam.ContainsKey(userRole) && userRole != UserRole.None)
+                            roles.Add(userRole);
 
                     if (roles.Count == 0)
                     {
-                        await telegramMessageService.SendMessage($"Свободных ролей в команде {user.team.name} нет!");
+                        await telegramMessageService.SendMessage($"Свободных ролей в команде {changeUser.team.name} нет!");
                         return ScenarioStatus.Completed;
                     }
 
@@ -100,7 +106,7 @@ namespace Otus_Project_Manage
                         Guid.TryParse(callbackQueryData.Argument, out userId);
                         UserRole.TryParse(userScenario.Data["newRole"].ToString(), out newRole);
 
-                        var changeUser = await userService.GetUserByUserId(userId, telegramMessageService.ct);
+                        changeUser = await userService.GetUserByUserId(userId, telegramMessageService.ct);
                         changeUser.team.usersInTeam.Add(newRole, changeUser);
                         changeUser.team.usersInTeam.Remove(changeUser.role);
 
@@ -114,8 +120,12 @@ namespace Otus_Project_Manage
                     {
                         keyboard = new InlineKeyboardMarkup();
 
+                        Guid.TryParse(userScenario.Data.ContainsKey("UserId").ToString(), out userId);
+
+                        changeUser = await userService.GetUserByUserId(userId, telegramMessageService.ct);
+
                         foreach (var userRole in Enum.GetValues<UserRole>())
-                            if (!user.team.usersInTeam.ContainsKey(userRole) && userRole != UserRole.None)
+                            if (!changeUser.team.usersInTeam.ContainsKey(userRole) && userRole != UserRole.None)
                                 keyboard.AddNewRow(InlineKeyboardButton.WithCallbackData($"{userRole}", $"chooseRole|{userRole}"));
 
                         await telegramMessageService.SendMessageWithKeyboard("Выберите новую роль пользователя.", keyboard);

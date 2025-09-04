@@ -22,25 +22,28 @@ namespace Otus_Project_Manage
 
             await using (var dbConn = factory.CreateDataContext())
             {
-                await dbConn.InsertAsync(task.MapToModel, token: ct);
                 TaskStage stage = task.firstStage;
-
                 while (stage != null)
                 {
-                    await dbConn.InsertAsync(stage.MapToModel, token: ct);
+                    await dbConn.InsertAsync(stage.MapToModel(), token: ct);
                     stage = stage.nextStage;
                 }
+
+                await dbConn.InsertAsync(task.MapToModel(), token: ct);
+
             }
         }
 
-        public async Task DeleteTask(Guid taskId, CancellationToken ct)
+        public async Task DeleteTask(ProjectTask task, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
 
             await using (var dbConn = factory.CreateDataContext())
             {
-                await dbConn.Stages.Where(x => x.taskId == taskId).DeleteAsync(ct);
-                await dbConn.Tasks.Where(x => x.taskId == taskId).DeleteAsync(ct);
+                await dbConn.Stages.Where(x => x.stageId == task.firstStage.stageId).DeleteAsync(ct);
+                await dbConn.Stages.Where(x => x.stageId == task.firstStage.nextStage.stageId).DeleteAsync(ct);
+                await dbConn.Stages.Where(x => x.stageId == task.firstStage.nextStage.nextStage.stageId).DeleteAsync(ct);
+                await dbConn.Tasks.Where(x => x.taskId == task.taskId).DeleteAsync(ct);
             }
         }
 
@@ -50,14 +53,15 @@ namespace Otus_Project_Manage
 
             await using (var dbConn = factory.CreateDataContext())
             {
-                await dbConn.UpdateAsync(task.MapToModel, token: ct);
                 TaskStage stage = task.firstStage;
 
                 while (stage != null)
                 {
-                    await dbConn.UpdateAsync(stage.MapToModel, token: ct);
+                    await dbConn.UpdateAsync(stage.MapToModel(), token: ct);
                     stage = stage.nextStage;
                 }
+
+                await dbConn.UpdateAsync(task.MapToModel(), token: ct);
             }
         }
 

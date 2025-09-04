@@ -9,13 +9,15 @@ namespace Otus_Project_Manage
 {
     public class AddTaskInProjectScenario : IScenario
     {
-        public AddTaskInProjectScenario(IProjectService projectService, ITaskService taskService)
+        public AddTaskInProjectScenario(IProjectService projectService, ITaskService taskService, ITeamService teamService)
         {
             this.projectService = projectService;
             this.taskService = taskService;
+            this.teamService = teamService;
         }
         private readonly IProjectService projectService;
         private readonly ITaskService taskService;
+        private readonly ITeamService teamService;
         public ScenarioTypes ScenarioType => ScenarioTypes.AddTaskInProject;
 
         public async Task<ScenarioStatus> HandleScanarioAsync(ITelegramMessageService telegramMessageService, UserScenarioData userScenario)
@@ -25,6 +27,7 @@ namespace Otus_Project_Manage
             InlineKeyboardMarkup keyboard = new InlineKeyboardMarkup();
             Guid projectId;
             Guid taskId;
+            Guid teamId;
 
             if (telegramMessageService.update.Type != UpdateType.CallbackQuery)
             {
@@ -78,7 +81,7 @@ namespace Otus_Project_Manage
                         return userScenario.scenarioStatus;
                     case "EnterDeadline":
                         string format = "dd.MM.yyyy";
-                        if (DateTime.TryParseExact(inputMessage, format, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime deadline))
+                        if (!DateTime.TryParseExact(inputMessage, format, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime deadline))
                         {
                             await telegramMessageService.SendMessage("Введен неверный формат даты!");
                             return ScenarioStatus.InProcess;
@@ -89,13 +92,24 @@ namespace Otus_Project_Manage
                         else
                             userScenario.Data["taskDeadline"] = deadline;
 
-                        keyboard.AddNewRow(new InlineKeyboardButton[] {
-                                           InlineKeyboardButton.WithCallbackData("Да", $"AcceptAddNewTask|{deadline}"),
-                                           InlineKeyboardButton.WithCallbackData("Нет", $"CancelAddNewTask|{deadline}")});
+                        var teams = (await teamService.GetAllTeams(telegramMessageService.ct)).Where(x => x.usersInTeam.Count == 3).ToList();
 
-                        await telegramMessageService.SendMessageWithKeyboard($"Вы хотите добавить задачу {userScenario.Data["taskName"].ToString()}?", keyboard);
+                        if (teams.Count == 0)
+                        {
+                            keyboard.AddNewRow(InlineKeyboardButton.WithCallbackData("Добавить задачу в проект.", $"addTaskInProject|{userScenario.Data["projectId"].ToString()}"));
+                            await telegramMessageService.SendMessageWithKeyboard("Полных команд не найдено! Возврат на стартовый этап.", keyboard);
+                            userScenario.Data.Clear();
+                            userScenario.currentStep = "Start";
+                            userScenario.scenarioStatus = ScenarioStatus.InProcess;
+                            return userScenario.scenarioStatus;
+                        }
 
-                        userScenario.currentStep = "AddNewTask";
+                        foreach (var team in teams)
+                            keyboard.AddNewRow(InlineKeyboardButton.WithCallbackData($"{team.name}", $"ChooseTeam|{team.teamId}"));
+
+                        await telegramMessageService.SendMessageWithKeyboard($"Выберите команду для выполнения задачи.", keyboard);
+
+                        userScenario.currentStep = "ChooseTeam";
                         userScenario.scenarioStatus = ScenarioStatus.InProcess;
                         return userScenario.scenarioStatus;
                     default:
@@ -136,7 +150,7 @@ namespace Otus_Project_Manage
 
                             if (tasks.Count == 0)
                             {
-                                keyboard.AddNewRow(InlineKeyboardButton.WithSwitchInlineQuery("Добавить задачу в проект.", $"addTaskInProject|{userScenario.Data["projectId"]}"));
+                                keyboard.AddNewRow(InlineKeyboardButton.WithCallbackData("Добавить задачу в проект.", $"addTaskInProject|{userScenario.Data["projectId"].ToString()}"));
                                 await telegramMessageService.SendMessageWithKeyboard("Задач для добавления нет. Возврат на стартовый этап.", keyboard);
                                 userScenario.Data.Clear();
                                 userScenario.currentStep = "Start";
@@ -145,8 +159,9 @@ namespace Otus_Project_Manage
                             }
 
                             foreach (var task in tasks)
-                                keyboard.AddNewRow(InlineKeyboardButton.WithSwitchInlineQuery($"{task.taskName}.", $"chooseTaskInProject|{task.taskId}"));
+                                keyboard.AddNewRow(InlineKeyboardButton.WithCallbackData($"{task.taskName}.", $"chooseTaskInProject|{task.taskId}"));
 
+                            await telegramMessageService.SendMessageWithKeyboard("Список доступных задач!", keyboard);
                             userScenario.currentStep = "ChooseTask";
                             userScenario.scenarioStatus = ScenarioStatus.InProcess;
                         }
@@ -198,7 +213,6 @@ namespace Otus_Project_Manage
                             await projectService.UpdateProject(project, telegramMessageService.ct);
                             await taskService.UpdateTask(task, telegramMessageService.ct);
 
-                            await telegramMessageService.SendMessageToUser($"Ваша задача {task.taskName} была добавлена в проект {project.name}.", task.firstStage.nextStage.nextStage.user);
                             await telegramMessageService.SendMessage($"Задача {task.taskName} была добавлена в проект {project.name}.");
 
                             userScenario.scenarioStatus = ScenarioStatus.Completed;
@@ -217,6 +231,28 @@ namespace Otus_Project_Manage
                             userScenario.scenarioStatus = ScenarioStatus.InProcess;
                         }
                         return userScenario.scenarioStatus;
+                    case "ChooseTeam":
+                        if (!Guid.TryParse(callbackQueryData.Argument, out teamId))
+                        {
+                            await telegramMessageService.SendMessage("Нажата неверная кнопка!");
+                            return ScenarioStatus.InProcess;
+                        }
+
+                        if (!userScenario.Data.ContainsKey("teamId"))
+                            userScenario.Data.Add("teamId", teamId);
+                        else
+                            userScenario.Data["teamId"] = teamId;
+
+                        keyboard.AddNewRow(new InlineKeyboardButton[] {
+                                           InlineKeyboardButton.WithCallbackData("Да", $"AcceptAddNewTask|{teamId}"),
+                                           InlineKeyboardButton.WithCallbackData("Нет", $"CancelAddNewTask|{teamId}")});
+
+                        await telegramMessageService.SendMessageWithKeyboard($"Вы хотите добавить задачу {userScenario.Data["taskName"].ToString()}?", keyboard);
+
+                        userScenario.currentStep = "AddNewTask";
+                        userScenario.scenarioStatus = ScenarioStatus.InProcess;
+                        return userScenario.scenarioStatus;
+                        return userScenario.scenarioStatus;
                     case "AddNewTask":
                         if (callbackQueryData.Command == "AcceptAddNewTask")
                         {
@@ -227,12 +263,13 @@ namespace Otus_Project_Manage
                             string stageSecondDescription = userScenario.Data["stageSecondDescription"].ToString();
                             string stageThirdDescription = userScenario.Data["stageThirdDescription"].ToString();
                             Guid.TryParse(userScenario.Data["projectId"].ToString(), out projectId);
+                            Guid.TryParse(userScenario.Data["teamId"].ToString(), out teamId);
 
                             var currentProject = await projectService.GetProjectById(projectId, telegramMessageService.ct);
 
                             ProjectTask newTask = new ProjectTask(taskName, taskDeadline, taskDescription);
                             newTask.status = TaskStatus.Active;
-                            newTask.team = telegramMessageService.user.team;
+                            var team = await teamService.GetTeamById(teamId, telegramMessageService.ct);
                             newTask.activeStage = newTask.firstStage;
                             newTask.project = currentProject;
 
@@ -241,7 +278,7 @@ namespace Otus_Project_Manage
                                 name = "Разработка",
                                 description = stageFirstDescription,
                                 status = TaskStatus.Active,
-                                user = telegramMessageService.user.team.usersInTeam[UserRole.Developer],
+                                user = team.usersInTeam[UserRole.Developer],
                                 task = newTask                                
                             };
 
@@ -250,7 +287,7 @@ namespace Otus_Project_Manage
                                 name = "Испытание",
                                 description = stageSecondDescription,
                                 status = TaskStatus.Active,
-                                user = telegramMessageService.user.team.usersInTeam[UserRole.Tester],
+                                user = team.usersInTeam[UserRole.Tester],
                                 task = newTask
                             };
 
@@ -259,11 +296,10 @@ namespace Otus_Project_Manage
                                 name = "Проверка",
                                 description = stageThirdDescription,
                                 status = TaskStatus.Active,
-                                user = telegramMessageService.user.team.usersInTeam[UserRole.TeamLead],
+                                user = team.usersInTeam[UserRole.TeamLead],
                                 task = newTask
                             };
 
-                            await telegramMessageService.SendMessageToUser($"Ваша задача {newTask.taskName} была добавлена в проект {currentProject.name}.", newTask.firstStage.nextStage.nextStage.user);
                             await telegramMessageService.SendMessage($"Задача {newTask.taskName} была добавлена в проект {currentProject.name}.");
 
                             await projectService.UpdateProject(currentProject, telegramMessageService.ct);

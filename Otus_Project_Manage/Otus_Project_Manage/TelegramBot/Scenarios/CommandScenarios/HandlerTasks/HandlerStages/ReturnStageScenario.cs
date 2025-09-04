@@ -98,20 +98,17 @@ namespace Otus_Project_Manage
 
                             if (task.firstStage.stageId == stageId)
                             {
+                                task.firstStage.status = TaskStatus.Active;
                                 task.firstStage.nextStage.status = TaskStatus.Active;
-                                task.firstStage.nextStage.nextStage.status = TaskStatus.Active;
                                 task.activeStage = task.firstStage;
                                 task.activeStage.comment = commit;                                
                             }
                             else
                             {
-                                task.firstStage.nextStage.nextStage.status = TaskStatus.Active;
+                                task.firstStage.nextStage.status = TaskStatus.Active;
                                 task.activeStage = task.firstStage.nextStage;
                                 task.activeStage.comment = commit;
                             }
-
-                            await telegramMessageService.SendMessageToUser($"К вам на исполнение пришел этап \"{task.activeStage.name}\" задачи \"{task.taskName}\".\r\n" +
-                                                                           $"Комментарий к этапу: \"{commit}\".", task.activeStage.user);
 
                             await taskService.UpdateTask(task, telegramMessageService.ct);
 

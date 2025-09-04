@@ -33,9 +33,8 @@ namespace Otus_Project_Manage
         /// <summary>
         /// Метод получения списка пользователей.
         /// </summary>
-        /// <param name="predicate"></param>
         /// <param name="ct">Токен отмены.</param>
-        Task<IReadOnlyList<ProjectUser>?> GetUsers(Func<ProjectUser, bool> predicate, CancellationToken ct);
+        Task<IReadOnlyList<ProjectUser>?> GetUsers(CancellationToken ct);
 
 
         /// <summary>

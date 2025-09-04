@@ -30,6 +30,7 @@ namespace Otus_Project_Manage
             InlineKeyboardMarkup keyboard = new InlineKeyboardMarkup();
             CallbackQueryData callbackQueryData = new CallbackQueryData(telegramMessageService.update);
             Guid taskId;
+            ProjectTask task;
 
             switch (userScenario.currentStep)
             {
@@ -49,7 +50,7 @@ namespace Otus_Project_Manage
                                            InlineKeyboardButton.WithCallbackData("Да", $"AcceptDeleteTask|{callbackQueryData.Argument}"),
                                            InlineKeyboardButton.WithCallbackData("Нет", $"CancelDeleteTask|{callbackQueryData.Argument}")});
 
-                    var task = await taskService.GetTasksById(taskId, telegramMessageService.ct);
+                    task = await taskService.GetTasksById(taskId, telegramMessageService.ct);
 
                     await telegramMessageService.SendMessageWithKeyboard($"Вы хотите удалить задачу {task.taskName}?", keyboard);
 
@@ -60,7 +61,10 @@ namespace Otus_Project_Manage
                     if (callbackQueryData.Command == "AcceptDeleteTask")
                     {
                         Guid.TryParse(userScenario.Data["taskId"].ToString(), out taskId);
-                        await taskService.DeleteTask(taskId, telegramMessageService.ct);
+
+                        task = await taskService.GetTasksById(taskId, telegramMessageService.ct);
+
+                        await taskService.DeleteTask(task, telegramMessageService.ct);
 
                         await telegramMessageService.SendMessageByKeyboardType("Задача удалена!", KeyboardTypes.Admin);
                         userScenario.scenarioStatus = ScenarioStatus.Completed;

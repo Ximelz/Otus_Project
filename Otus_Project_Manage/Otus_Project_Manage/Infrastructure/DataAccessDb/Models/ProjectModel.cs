@@ -56,12 +56,6 @@ namespace Otus_Project_Manage
         /// Руководитель проекта.
         /// </summary>
         [Association(ThisKey = nameof(userId), OtherKey = nameof(ProjectUserModel.userId))]
-        public ProjectUser projectManager;
-
-        /// <summary>
-        /// Активные задачи в проекте.
-        /// </summary>
-        [Association(ThisKey = nameof(projectId), OtherKey = nameof(ProjectTaskModel.projectId))]
-        public List<ProjectTask> tasks = new List<ProjectTask>();
+        public ProjectUserModel projectManager;
     }
 }

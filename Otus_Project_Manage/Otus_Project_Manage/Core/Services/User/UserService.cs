@@ -79,28 +79,28 @@ namespace Otus_Project_Manage
         {
             ct.ThrowIfCancellationRequested();
 
-            return await userRep.GetUsers(x => x.role == role, ct);
+            return (await userRep.GetUsers(ct)).Where(x => x.role == role).ToList();
         }
 
         public async Task<IReadOnlyList<ProjectUser>?> GetUsersByTeam(Guid teamId, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
 
-            return await userRep.GetUsers(x => x.team.teamId == teamId, ct);
+            return (await userRep.GetUsers(ct)).Where(x => x.team != null).Where(x => x.team.teamId == teamId).ToList();
         }
 
         public async Task<IReadOnlyList<ProjectUser>?> GetRegisteredUsers(CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
 
-            return await userRep.GetUsers(x => x.role != UserRole.None, ct);
+            return (await userRep.GetUsers(ct)).Where(x => x.role != UserRole.None).ToList();
         }
 
         public async Task<IReadOnlyList<ProjectUser>?> GetAllUsers(CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
 
-            return await userRep.GetUsers(x => x.userId != null, ct);
+            return await userRep.GetUsers(ct);
         }
 
         public async Task UpdateUser(ProjectUser updateUser, CancellationToken ct)

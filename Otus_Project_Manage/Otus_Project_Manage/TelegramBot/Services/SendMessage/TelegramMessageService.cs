@@ -109,15 +109,5 @@ namespace Otus_Project_Manage
 
             await _botClient.SetMyCommands(currentCommands, BotCommandScope.Chat(chat.Id));
         }
-
-        public async Task SendMessageToUser(string message, ProjectUser user)
-        {
-            _ct.ThrowIfCancellationRequested();
-
-            await _botClient.SendMessage(chatId: user.telegramUserId,
-                                         text: message,
-                                         parseMode: ParseMode.Html,
-                                         cancellationToken: _ct);
-        }
     }
 }

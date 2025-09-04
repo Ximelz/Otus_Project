@@ -19,9 +19,9 @@ namespace Otus_Project_Manage
         /// <summary>
         /// Удаление задачи из репозитория.
         /// </summary>
-        /// <param name="taskId">Id задачи.</param>
+        /// <param name="task">Задача для удаления.</param>
         /// <param name="ct">Токен отмены.</param>
-        Task DeleteTask(Guid taskId, CancellationToken ct);
+        Task DeleteTask(ProjectTask task, CancellationToken ct);
 
         /// <summary>
         /// Обновление задачи в репозитории.

@@ -46,13 +46,11 @@ namespace Otus_Project_Manage
                     else
                         userScenario.Data.Add("TeamName", teamName);
 
-                    userScenario.Data.Add($"{UserRole.TeamLead}", null);
-
                     keyboard.AddNewRow(new InlineKeyboardButton[] {
-                                           InlineKeyboardButton.WithCallbackData("Да", $"AcceptChooseUserInAddTeam|{UserRole.TeamLead}"),
-                                           InlineKeyboardButton.WithCallbackData("Нет", $"CancelChooseUserInAddTeam|{UserRole.TeamLead}")});
+                                           InlineKeyboardButton.WithCallbackData("Да", $"AcceptChooseUserInAddTeam|{teamName}"),
+                                           InlineKeyboardButton.WithCallbackData("Нет", $"CancelChooseUserInAddTeam|{teamName}")});
 
-                    await telegramMessageService.SendMessageWithKeyboard($"Вы хотите выбрать пользователя на роль {UserRole.TeamLead}?", keyboard);
+                    await telegramMessageService.SendMessageWithKeyboard($"Вы хотите добавить пользователей?", keyboard);
 
                     userScenario.currentStep = "ChooseUsers";
                     userScenario.scenarioStatus = ScenarioStatus.InProcess;
@@ -69,33 +67,35 @@ namespace Otus_Project_Manage
 
                     switch (callbackQueryData.Command)
                     {
-                        case "AcceptChooseUserInAddTeam":
-                            users = await userService.GetUsersByRole(UserRole.None, telegramMessageService.ct);
-
-                            foreach (var user in users)
-                                keyboard.AddNewRow(InlineKeyboardButton.WithCallbackData($"{user.userName}", $"ChooseUsersInAddTeam|{user.telegramUserId}"));
-
-                            await telegramMessageService.SendMessageWithKeyboard($"Выберите пользователя на роль {callbackQueryData.Argument}", keyboard);
-
-                            userScenario.scenarioStatus = ScenarioStatus.InProcess;
-                            userScenario.currentStep = "ChooseUsers";
-
-                            break;
                         case "CancelChooseUserInAddTeam":
-                            if (!UserRole.TryParse(callbackQueryData.Argument, out role))
+                            keyboard.AddNewRow(new InlineKeyboardButton[] {
+                                           InlineKeyboardButton.WithCallbackData("Да", $"AcceptAddTeam|{userScenario.Data["TeamName"]}"),
+                                           InlineKeyboardButton.WithCallbackData("Нет", $"CancelAddTeam|{userScenario.Data["TeamName"]}")});
+
+                            await telegramMessageService.SendMessageWithKeyboard($"Вы подтверждаете создание команды {userScenario.Data["TeamName"]}?", keyboard);
+
+                            userScenario.currentStep = "AddTeam";
+                            userScenario.scenarioStatus = ScenarioStatus.InProcess;
+                            break;
+                        case "AcceptChooseUserInAddTeam":
+                            if (!userScenario.Data.ContainsKey("TeamLead"))
                             {
-                                await telegramMessageService.SendMessage("Неверный аргумент у кнопки!");
-                                userScenario.scenarioStatus = ScenarioStatus.InProcess;
+                                keyboard.AddNewRow(new InlineKeyboardButton[] {
+                                           InlineKeyboardButton.WithCallbackData("Да", $"AcceptChooseUserRole|{UserRole.TeamLead}"),
+                                           InlineKeyboardButton.WithCallbackData("Нет", $"CancelChooseUserRole|{UserRole.TeamLead}")});
+
+                                await telegramMessageService.SendMessageWithKeyboard($"Вы хотите выбрать пользователя на роль {UserRole.TeamLead}?", keyboard);
+
                                 userScenario.currentStep = "ChooseUsers";
+                                userScenario.scenarioStatus = ScenarioStatus.InProcess;
                                 break;
                             }
 
                             if (!userScenario.Data.ContainsKey("Developer"))
                             {
-                                userScenario.Data.Add($"{UserRole.Developer}", null);
                                 keyboard.AddNewRow(new InlineKeyboardButton[] {
-                                           InlineKeyboardButton.WithCallbackData("Да", $"AcceptChooseUserInAddTeam|{UserRole.Developer}"),
-                                           InlineKeyboardButton.WithCallbackData("Нет", $"CancelChooseUserInAddTeam|{UserRole.Developer}")});
+                                           InlineKeyboardButton.WithCallbackData("Да", $"AcceptChooseUserRole|{UserRole.Developer}"),
+                                           InlineKeyboardButton.WithCallbackData("Нет", $"CancelChooseUserRole|{UserRole.Developer}")});
 
                                 await telegramMessageService.SendMessageWithKeyboard($"Вы хотите выбрать пользователя на роль {UserRole.Developer}?", keyboard);
 
@@ -106,10 +106,9 @@ namespace Otus_Project_Manage
 
                             if (!userScenario.Data.ContainsKey("Tester"))
                             {
-                                userScenario.Data.Add($"{UserRole.Tester}", null);
                                 keyboard.AddNewRow(new InlineKeyboardButton[] {
-                                           InlineKeyboardButton.WithCallbackData("Да", $"AcceptChooseUserInAddTeam|{UserRole.Tester}"),
-                                           InlineKeyboardButton.WithCallbackData("Нет", $"CancelChooseUserInAddTeam|{UserRole.Tester}")});
+                                           InlineKeyboardButton.WithCallbackData("Да", $"AcceptChooseUserRole|{UserRole.Tester}"),
+                                           InlineKeyboardButton.WithCallbackData("Нет", $"CancelChooseUserRole|{UserRole.Tester}")});
 
                                 await telegramMessageService.SendMessageWithKeyboard($"Вы хотите выбрать пользователя на роль {UserRole.Tester}?", keyboard);
 
@@ -128,19 +127,61 @@ namespace Otus_Project_Manage
                             userScenario.currentStep = "AddTeam";
                             userScenario.scenarioStatus = ScenarioStatus.InProcess;
                             break;
-                        case "ChooseUsersInAddTeam":
-                            if (!long.TryParse(callbackQueryData.Argument, out telegramUserId))
+                        case "AcceptChooseUserRole":
+                            if (!UserRole.TryParse(callbackQueryData.Argument, out role))
                             {
                                 await telegramMessageService.SendMessage("Неверный аргумент у кнопки!");
-                                userScenario.scenarioStatus = ScenarioStatus.InProcess;
-                                userScenario.currentStep = "ChooseUsers";
-                                break;
+                                return ScenarioStatus.InProcess;
                             }
+                            List<long> ids = new List<long>();
+
+                            if (userScenario.Data.ContainsKey("TeamLead"))
+                                ids.Add(long.Parse(userScenario.Data["TeamLead"].ToString()));
+
+                            if (userScenario.Data.ContainsKey("Developer"))
+                                ids.Add(long.Parse(userScenario.Data["Developer"].ToString()));
 
                             if (userScenario.Data.ContainsKey("Tester"))
-                            {
-                                userScenario.Data["Tester"] = callbackQueryData.Argument;
+                                ids.Add(long.Parse(userScenario.Data["Tester"].ToString()));
 
+                            users = await userService.GetUsersByRole(UserRole.None, telegramMessageService.ct);
+
+                            foreach (var user in users)
+                                if (!ids.Contains(user.telegramUserId))
+                                    keyboard.AddNewRow(InlineKeyboardButton.WithCallbackData($"{user.userName}", $"ChoosenUser|{user.telegramUserId} {role}"));
+
+                            await telegramMessageService.SendMessageWithKeyboard("Выберите пользователя:", keyboard);
+
+                            userScenario.currentStep = "ChooseUsers";
+                            userScenario.scenarioStatus = ScenarioStatus.InProcess;
+                            return userScenario.scenarioStatus;
+                        case "ChoosenUser":
+                            string[] arguments = callbackQueryData.Argument.Split();
+                            if (arguments.Length != 2)
+                            {
+                                await telegramMessageService.SendMessage("Неверный аргумент у кнопки!");
+                                return ScenarioStatus.InProcess;
+                            }
+
+                            if (!long.TryParse(arguments[0], out telegramUserId))
+                            {
+                                await telegramMessageService.SendMessage("Неверный аргумент у кнопки!");
+                                return ScenarioStatus.InProcess;
+                            }
+
+                            if (!UserRole.TryParse(arguments[1], out role))
+                            {
+                                await telegramMessageService.SendMessage("Неверный аргумент у кнопки!");
+                                return ScenarioStatus.InProcess;
+                            }
+
+                            if (userScenario.Data.ContainsKey($"{role}"))
+                                userScenario.Data[$"{role}"] = telegramUserId;
+                            else
+                                userScenario.Data.Add($"{role}", telegramUserId);
+
+                            if (role == UserRole.Tester)
+                            {
                                 keyboard.AddNewRow(new InlineKeyboardButton[] {
                                            InlineKeyboardButton.WithCallbackData("Да", $"AcceptAddTeam|{userScenario.Data["TeamName"]}"),
                                            InlineKeyboardButton.WithCallbackData("Нет", $"CancelAddTeam|{userScenario.Data["TeamName"]}")});
@@ -152,31 +193,14 @@ namespace Otus_Project_Manage
                                 break;
                             }
 
-                            if (userScenario.Data.ContainsKey("Developer"))
-                            {
-                                userScenario.Data["Developer"] = callbackQueryData.Argument;
-
-                                keyboard.AddNewRow(new InlineKeyboardButton[] {
-                                           InlineKeyboardButton.WithCallbackData("Да", $"AcceptChooseUserInAddTeam|{UserRole.Developer}"),
-                                           InlineKeyboardButton.WithCallbackData("Нет", $"CancelChooseUserInAddTeam|{UserRole.Developer}")});
-
-                                await telegramMessageService.SendMessageWithKeyboard($"Вы хотите выбрать пользователя на роль {UserRole.Developer}?", keyboard);
-
-                                userScenario.currentStep = "ChooseUsers";
-                                userScenario.scenarioStatus = ScenarioStatus.InProcess;
-                                break;
-                            }
-
-                            userScenario.Data["TeamLead"] = callbackQueryData.Argument;
-
                             keyboard.AddNewRow(new InlineKeyboardButton[] {
-                                           InlineKeyboardButton.WithCallbackData("Да", $"AcceptChooseUserInAddTeam|{UserRole.TeamLead}"),
-                                           InlineKeyboardButton.WithCallbackData("Нет", $"CancelChooseUserInAddTeam|{UserRole.TeamLead}")});
+                                           InlineKeyboardButton.WithCallbackData("Да", $"AcceptChooseUserInAddTeam|{telegramUserId}"),
+                                           InlineKeyboardButton.WithCallbackData("Нет", $"CancelChooseUserInAddTeam|{telegramUserId}")});
 
-                            await telegramMessageService.SendMessageWithKeyboard($"Вы хотите выбрать пользователя на роль {UserRole.TeamLead}?", keyboard);
+                            await telegramMessageService.SendMessageWithKeyboard($"Пользователь выбран. Хотите добавить еще пользователя?", keyboard);
 
-                            userScenario.currentStep = "ChooseUsers";
                             userScenario.scenarioStatus = ScenarioStatus.InProcess;
+                            userScenario.currentStep = "ChooseUsers";
                             break;
                         default:
                             await telegramMessageService.SendMessage("Нажата неверная кнопка!");
@@ -202,22 +226,25 @@ namespace Otus_Project_Manage
                             team.name = callbackQueryData.Argument;
                             await teamService.AddTeam(team, telegramMessageService.ct);
 
-                            if (userScenario.Data["TeamLead"] != null)
+                            if (userScenario.Data.ContainsKey("TeamLead"))
                             {
-                                telegramUserId = (long)userScenario.Data["TeamLead"];
+                                long.TryParse(userScenario.Data["TeamLead"].ToString(), out telegramUserId);
                                 await userService.ChangeUserRole(telegramUserId, UserRole.TeamLead, telegramMessageService.ct);
+                                await userService.ChangeUserTeam(telegramUserId, team, telegramMessageService.ct);
                             }
 
-                            if (userScenario.Data["Developer"] != null)
+                            if (userScenario.Data.ContainsKey("Developer"))
                             {
-                                telegramUserId = (long)userScenario.Data["Developer"];
+                                long.TryParse(userScenario.Data["Developer"].ToString(), out telegramUserId);
                                 await userService.ChangeUserRole(telegramUserId, UserRole.Developer, telegramMessageService.ct);
+                                await userService.ChangeUserTeam(telegramUserId, team, telegramMessageService.ct);
                             }
 
-                            if (userScenario.Data["Tester"] != null)
+                            if (userScenario.Data.ContainsKey("Tester"))
                             {
-                                telegramUserId = (long)userScenario.Data["Tester"];
+                                long.TryParse(userScenario.Data["Tester"].ToString(), out telegramUserId);
                                 await userService.ChangeUserRole(telegramUserId, UserRole.Tester, telegramMessageService.ct);
+                                await userService.ChangeUserTeam(telegramUserId, team, telegramMessageService.ct);
                             }
 
                             await telegramMessageService.SendMessageByKeyboardType($"Команда {team.name} создана!", KeyboardTypes.Admin);

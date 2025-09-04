@@ -49,17 +49,19 @@ namespace Otus_Project_Manage
                                            InlineKeyboardButton.WithCallbackData("Нет", $"CancelCompleteProject|{projectId}")});
 
                     await telegramMessageService.SendMessageWithKeyboard("Вы хотите завершить проект и все его незавершенные задачи?", keyboard);
-                    userScenario.currentStep = "ChooseProjectManager";
+                    userScenario.currentStep = "CompleteProject";
                     userScenario.scenarioStatus = ScenarioStatus.InProcess;
                     return userScenario.scenarioStatus;
                 case "CompleteProject":
                     if (callbackQueryData.Command == "AcceptCompleteProject")
                     {
-                        Guid.TryParse(userScenario.Data["projectId"].ToString(), out projectId);
+                        Guid.TryParse(callbackQueryData.Argument, out projectId);
 
                         var project = await projectService.GetProjectById(projectId, telegramMessageService.ct);
 
                         project.status = ProjectStatus.Complete;
+                        project.projectManager.project = null;
+                        project.projectManager = null;
 
                         foreach (var task in project.tasks)
                         {
@@ -83,7 +85,7 @@ namespace Otus_Project_Manage
                     }
                     else if (callbackQueryData.Command == "CancelCompleteProject")
                     {
-                        await telegramMessageService.SendMessage("Завершение проекта отменено!");
+                        await telegramMessageService.SendMessageWithDefaultKeyboard("Завершение проекта отменено!");
                         userScenario.scenarioStatus = ScenarioStatus.Completed;
                     }
                     else

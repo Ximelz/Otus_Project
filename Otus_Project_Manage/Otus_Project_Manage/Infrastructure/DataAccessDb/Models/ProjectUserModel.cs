@@ -46,22 +46,11 @@ namespace Otus_Project_Manage
         [Column("isAdmin"), NotNull]
         public bool isAdmin = false;
 
-        /// <summary>
-        /// Проект пользователя.
-        /// </summary>
-        [Column("projectId")]
-        public Guid? projectId;
 
         /// <summary>
         /// Команда (группа) пользователя.
         /// </summary>
         [Association(ThisKey = nameof(teamId), OtherKey = nameof(UserTeamModel.teamId))]
-        public UsersTeam? team;
-
-        /// <summary>
-        /// Команда (группа) пользователя.
-        /// </summary>
-        [Association(ThisKey = nameof(projectId), OtherKey = nameof(ProjectModel.projectId))]
-        public Project? project;
+        public UserTeamModel? team;
     }
 }

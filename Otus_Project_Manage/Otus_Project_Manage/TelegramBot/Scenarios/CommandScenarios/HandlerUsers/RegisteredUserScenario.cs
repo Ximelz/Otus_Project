@@ -72,7 +72,7 @@ namespace Otus_Project_Manage
                     if (!userScenario.Data.ContainsKey("UserRole"))
                         userScenario.Data.Add("UserRole", callbackQueryData.Argument);
                     else
-                        userScenario.Data["UserId"] = callbackQueryData.Argument;
+                        userScenario.Data["UserRole"] = callbackQueryData.Argument;
 
                     var teams = await teamService.GetTeamByEmptyUserRole(userRole, telegramMessageService.ct);
 
@@ -107,14 +107,18 @@ namespace Otus_Project_Manage
                                            InlineKeyboardButton.WithCallbackData("Да", $"AcceptRegisteredUser|{callbackQueryData.Argument}"),
                                            InlineKeyboardButton.WithCallbackData("Нет", $"CancelRegisteredUser|{callbackQueryData.Argument}")});
 
+                    await telegramMessageService.SendMessageWithKeyboard("Вы подтверждаете регистрацию пользователя?", keyboard);
                     userScenario.scenarioStatus = ScenarioStatus.InProcess;
                     userScenario.currentStep = "RegisteredUser";
 
                     return userScenario.scenarioStatus;
                 case "RegisteredUser":
-                    ProjectUser changeUser = await userService.GetUserByUserId((Guid)userScenario.Data["UserId"], telegramMessageService.ct);
-                    UserRole chooseUserRole = (UserRole)userScenario.Data["UserRole"];
-                    UsersTeam chooseTeam = await teamService.GetTeamById((Guid)userScenario.Data["TeamId"], telegramMessageService.ct);
+                    Guid.TryParse(userScenario.Data["UserId"].ToString(), out userId);
+                    Guid.TryParse(userScenario.Data["TeamId"].ToString(), out teamId);
+                    UserRole.TryParse(userScenario.Data["UserRole"].ToString(), out UserRole chooseUserRole);
+
+                    ProjectUser changeUser = await userService.GetUserByUserId(userId, telegramMessageService.ct);
+                    UsersTeam chooseTeam = await teamService.GetTeamById(teamId, telegramMessageService.ct);
 
                     if (callbackQueryData.Command == "AcceptRegisteredUser")
                     {

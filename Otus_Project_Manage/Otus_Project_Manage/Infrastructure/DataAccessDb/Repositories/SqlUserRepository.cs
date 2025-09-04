@@ -22,7 +22,7 @@ namespace Otus_Project_Manage
 
             await using (var dbConn = factory.CreateDataContext())
             {
-                await dbConn.InsertAsync(await user.MapToModel(), token: ct);
+                await dbConn.InsertAsync(user.MapToModel(), token: ct);
             }
         }
 
@@ -36,19 +36,31 @@ namespace Otus_Project_Manage
             }
         }
 
-        public async Task<IReadOnlyList<ProjectUser>> GetUsers(Func<ProjectUser, bool> predicate, CancellationToken ct)
+        public async Task<IReadOnlyList<ProjectUser>> GetUsers(CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
 
             await using (var dbConn = factory.CreateDataContext())
             {
-                return dbConn.Users
-                             .LoadWith(x => x.team)
-                             .ToListAsync(ct)
-                             .MapFromModelListAsync(ct)
-                             .Result
-                             .Where(predicate)
-                             .ToList();
+                var users = await dbConn.Users
+                                        .LoadWith(x => x.team)                                        
+                                        .ToListAsync(ct)
+                                        .MapFromModelListAsync(ct);
+                
+                if (users == null)
+                    return null;
+
+                foreach (var user in users)
+                {
+                    var project = (await dbConn.Projects
+                                               .LoadWith(x => x.projectManager)
+                                               .ToListAsync(ct)
+                                               .MapFromModelListAsync(ct))
+                                               .Where(x => x.projectManager.userId == user.userId)
+                                               .FirstOrDefault();
+                    user.project = project;
+                }
+                return users;
             }
         }
 
@@ -58,7 +70,7 @@ namespace Otus_Project_Manage
 
             await using (var dbConn = factory.CreateDataContext())
             {
-                await dbConn.UpdateAsync(await user.MapToModel(), token: ct);
+                await dbConn.UpdateAsync(user.MapToModel(), token: ct);
             }
         }
 
@@ -68,13 +80,24 @@ namespace Otus_Project_Manage
 
             await using (var dbConn = factory.CreateDataContext())
             {
-                return dbConn.Users
-                             .LoadWith(x => x.team)
-                             .ToListAsync(ct)
-                             .MapFromModelListAsync(ct)
-                             .Result
-                             .Where(predicate)
-                             .FirstOrDefault();
+                var user = (await dbConn.Users
+                                        .LoadWith(x => x.team)
+                                        .ToListAsync(ct)
+                                        .MapFromModelListAsync(ct))                             
+                                        .Where(predicate)
+                                        .FirstOrDefault();
+
+                if (user == null)
+                    return null;
+
+                var project = (await dbConn.Projects
+                                               .LoadWith(x => x.projectManager)
+                                               .ToListAsync(ct)
+                                               .MapFromModelListAsync(ct))
+                                               .Where(x => x.projectManager.userId == user.userId)
+                                               .FirstOrDefault();
+                user.project = project;
+                return user;
             }
         }
     }

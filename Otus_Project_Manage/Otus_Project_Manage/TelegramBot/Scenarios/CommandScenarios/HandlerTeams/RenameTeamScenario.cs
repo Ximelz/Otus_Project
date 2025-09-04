@@ -52,8 +52,7 @@ namespace Otus_Project_Manage
                         userScenario.currentStep = "EnteringName";
                         return userScenario.scenarioStatus;
                     case "RenameTeam":
-
-                        teamId = (Guid)userScenario.Data["TeamId"];
+                        Guid.TryParse(userScenario.Data["TeamId"].ToString(), out teamId);
                         newNameTeam = userScenario.Data["NewName"].ToString();
                         if (callbackQueryData.Command == "AcceptRenameTeam")
                         {
@@ -92,7 +91,7 @@ namespace Otus_Project_Manage
                     else
                         userScenario.Data.Add("NewName", newNameTeam);
 
-                    teamId = (Guid)userScenario.Data["TeamId"];
+                    Guid.TryParse(userScenario.Data["TeamId"].ToString(), out teamId);
 
                     keyboard.AddNewRow(new InlineKeyboardButton[] {
                                            InlineKeyboardButton.WithCallbackData("Да", $"AcceptRenameTeam|{teamId}"),

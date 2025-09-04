@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -11,6 +8,9 @@ namespace Otus_Project_Manage
     {
         public static UsersTeam MapFromModel(this UserTeamModel userModel)
         {
+            if (userModel == null)
+                return null;
+
             return new UsersTeam()
             {
                 teamId = userModel.teamId,
@@ -20,6 +20,9 @@ namespace Otus_Project_Manage
 
         public static UserTeamModel MapToModel(this UsersTeam team)
         {
+            if (team == null)
+                return null;
+
             return new UserTeamModel()
             {
                 teamId = team.teamId,
@@ -33,18 +36,22 @@ namespace Otus_Project_Manage
 
             List<UsersTeam> teams = new List<UsersTeam>();
 
-            foreach (var teamModel in teamsModel.Result)
-                teams.Add(teamModel.MapFromModel());
+            if (teamsModel != null)
+                foreach (var teamModel in teamsModel.Result)
+                    teams.Add(teamModel.MapFromModel());
 
             return Task.FromResult(teams);
         }
 
-        public static Task<List<UserTeamModel>> MapToModelListAsync(this Task<List<UsersTeam>> teams)
+        public static Task<List<UserTeamModel>> MapToModelListAsync(this Task<List<UsersTeam>> teams, CancellationToken ct)
         {
+            ct.ThrowIfCancellationRequested();
+
             List<UserTeamModel> teamsModel = new List<UserTeamModel>();
 
-            foreach (var team in teams.Result)
-                teamsModel.Add(team.MapToModel());
+            if (teams != null)
+                foreach (var team in teams.Result)
+                    teamsModel.Add(team.MapToModel());
 
             return Task.FromResult(teamsModel);
         }

@@ -2,8 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -61,7 +59,17 @@ namespace Otus_Project_Manage
                                              .ToList();
 
                     foreach (var user in users)
+                    {
+                        var project = (await dbConn.Projects
+                                                   .LoadWith(x => x.projectManager)
+                                                   .ToListAsync(ct)
+                                                   .MapFromModelListAsync(ct))
+                                                   .Where(x => x.projectManager.userId == user.userId)
+                                                   .FirstOrDefault();
+
+                        user.project = project;
                         team.usersInTeam.Add(user.role, user);
+                    }
                 }
 
                 return teams.Where(predicate).ToList(); ;
@@ -84,25 +92,36 @@ namespace Otus_Project_Manage
 
             await using (var dbConn = factory.CreateDataContext())
             {
-                var teams = await dbConn.Teams
+                var team = (await dbConn.Teams
+                                        .ToListAsync(ct)
+                                        .MapFromModelListAsync(ct))
+                                        .Where(predicate).FirstOrDefault();
+
+                if (team == null)
+                    return null;
+
+                var users = (await dbConn.Users
+                                         .LoadWith(x => x.team)
                                          .ToListAsync(ct)
-                                         .MapFromModelListAsync(ct);
+                                         .MapFromModelListAsync(ct))
+                                         .Where(x => x.team != null)
+                                         .Where(x => x.team.teamId == team.teamId)
+                                         .ToList();
 
-                foreach (var team in teams)
+                foreach (var user in users)
                 {
-                    var users = (await dbConn.Users
-                                             .LoadWith(x => x.team)
-                                             .ToListAsync(ct)
-                                             .MapFromModelListAsync(ct))
-                                             .Where(x => x.team != null)
-                                             .Where(x => x.team.teamId == team.teamId)
-                                             .ToList();
+                    var project = (await dbConn.Projects
+                                               .LoadWith(x => x.projectManager)
+                                               .ToListAsync(ct)
+                                               .MapFromModelListAsync(ct))
+                                               .Where(x => x.projectManager.userId == user.userId)
+                                               .FirstOrDefault();
 
-                    foreach (var user in users)
-                        team.usersInTeam.Add(user.role, user);
+                    user.project = project;
+                    team.usersInTeam.Add(user.role, user);
                 }
 
-                return teams.Where(predicate).FirstOrDefault();
+                return team;
             }
         }
     }

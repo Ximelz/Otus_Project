@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Telegram.Bot.Types.ReplyMarkups;
@@ -33,13 +34,20 @@ namespace Otus_Project_Manage
             if (telegramMessageService.user.isAdmin)
             {
                 keyboard.AddNewRow(InlineKeyboardButton.WithCallbackData("Удалить", $"deleteUser|{showUser.userId}"));
-                keyboard.AddNewRow(InlineKeyboardButton.WithCallbackData("Изменить роль", $"changeUserRole|{showUser.userId}"));
-                keyboard.AddNewRow(InlineKeyboardButton.WithCallbackData("Изменить команду", $"changeUserTeam|{showUser.userId}"));
+                if (showUser.role != UserRole.None)
+                {
+                    keyboard.AddNewRow(InlineKeyboardButton.WithCallbackData("Изменить роль", $"changeUserRole|{showUser.userId}"));
+                    keyboard.AddNewRow(InlineKeyboardButton.WithCallbackData("Изменить команду", $"changeUserTeam|{showUser.userId}"));
+                }
+                else
+                    keyboard.AddNewRow(InlineKeyboardButton.WithCallbackData("Зарегистрировать", $"registeredUser|{showUser.userId}"));
             }
+
+            var teamName = showUser.team == null ? "Нет" : showUser.team.name;
 
             await telegramMessageService.SendMessageWithKeyboard(
                         $"Информация о пользователе {showUser.userName}:\r\n" +
-                        $"Команда: {showUser.team.name}.\r\n" +
+                        $"Команда: {teamName}.\r\n" +
                         $"Роль: {showUser.role}.",
                         keyboard);
         }
@@ -90,8 +98,13 @@ namespace Otus_Project_Manage
 
             InlineKeyboardMarkup keyboard = new InlineKeyboardMarkup();
             foreach (var teamUser in teamUsers)
-                keyboard.AddNewRow(InlineKeyboardButton.WithCallbackData($"{teamUser.userName}", $"showUser|{teamUser.userId}"));
+                keyboard.AddNewRow(InlineKeyboardButton.WithCallbackData($"{teamUser.userName}: {teamUser.role}", $"showUser|{teamUser.userId}"));
 
+            if (telegramMessageService.user.isAdmin)
+            {
+                keyboard.AddNewRow(InlineKeyboardButton.WithCallbackData($"Удалить", $"deleteTeam|{guidShowTeam}"));
+                keyboard.AddNewRow(InlineKeyboardButton.WithCallbackData($"Переименовать", $"renameTeam|{guidShowTeam}"));
+             }
 
             await telegramMessageService.SendMessageWithKeyboard(
                         $"Состав коменды {showTeam.name}:",
@@ -163,18 +176,18 @@ namespace Otus_Project_Manage
             var showTask = await taskService.GetTasksById(taskId, telegramMessageService.ct);
 
             InlineKeyboardMarkup keyboard = new InlineKeyboardMarkup();
-            
-            keyboard.AddNewRow(InlineKeyboardButton.WithCallbackData(
-                    $"Перейти к этапу \"{showTask.firstStage.name}\"",
-                    $"showStep|{showTask.taskId} {showTask.firstStage.stageId}"));
 
             keyboard.AddNewRow(InlineKeyboardButton.WithCallbackData(
-                    $"Перейти к этапу \"{showTask.firstStage.nextStage.name}\"",
-                    $"showStep|{showTask.taskId} {showTask.firstStage.nextStage.stageId}"));
+                    $"Этап \"{showTask.firstStage.name}\"",
+                    $"showStage|{showTask.taskId} 1"));
 
             keyboard.AddNewRow(InlineKeyboardButton.WithCallbackData(
-                    $"Перейти к этапу \"{showTask.firstStage.nextStage.nextStage.name}\"",
-                    $"showStep|{showTask.taskId} {showTask.firstStage.nextStage.nextStage.stageId}"));
+                    $"Этап \"{showTask.firstStage.nextStage.name}\"",
+                    $"showStage|{showTask.taskId} 2"));
+
+            keyboard.AddNewRow(InlineKeyboardButton.WithCallbackData(
+                    $"Этап \"{showTask.firstStage.nextStage.nextStage.name}\"",
+                    $"showStage|{showTask.taskId} 3"));
 
             if (telegramMessageService.user.isAdmin)
                 keyboard.AddNewRow(InlineKeyboardButton.WithCallbackData("Удалить", $"deleteTask|{showTask.taskId}"));
@@ -188,7 +201,7 @@ namespace Otus_Project_Manage
                         keyboard);
         }
 
-        public async Task ShowStep(ITelegramMessageService telegramMessageService, CallbackQueryData callbackData)
+        public async Task ShowStage(ITelegramMessageService telegramMessageService, CallbackQueryData callbackData)
         {
             telegramMessageService.ct.ThrowIfCancellationRequested();
 
@@ -200,12 +213,16 @@ namespace Otus_Project_Manage
             if (!Guid.TryParse(arguments[0], out Guid taskId))
                 throw new ArgumentException($"Не получилось преобразовать в Guid строку \"{arguments[0]}\"");
 
-
-            if (!Guid.TryParse(arguments[1], out Guid stageId))
-                throw new ArgumentException($"Не получилось преобразовать в Guid строку \"{arguments[1]}\"");
-
             InlineKeyboardMarkup keyboard = new InlineKeyboardMarkup();
             var task = await taskService.GetTasksById(taskId, telegramMessageService.ct);
+
+            int currentIndex = int.Parse(arguments[1]);
+            TaskStage stage = task.firstStage;
+
+            for (int i = 1; i < currentIndex; i++)
+                stage = stage.nextStage;
+
+            Guid stageId = stage.stageId;
 
             var currentStage = task.firstStage;
 
@@ -220,7 +237,7 @@ namespace Otus_Project_Manage
                 if (telegramMessageService.user.userId == task.activeStage.user.userId)
                 {
                     keyboard.AddNewRow(InlineKeyboardButton.WithCallbackData("Выполнить", $"completeStage|{task.taskId}"));
-                    if (telegramMessageService.user.role != UserRole.Developer)
+                    if (task.activeStage.stageId != task.firstStage.stageId)
                         keyboard.AddNewRow(InlineKeyboardButton.WithCallbackData("Вернуть на доработку", $"returnStage|{task.taskId}"));
                 }
 
@@ -277,6 +294,7 @@ namespace Otus_Project_Manage
 
             InlineKeyboardMarkup keyboard = new InlineKeyboardMarkup();
 
+            keyboard.AddNewRow(InlineKeyboardButton.WithCallbackData("Посмотреть задачи", $"showProjectTasks|{projectId}"));
             keyboard.AddNewRow(InlineKeyboardButton.WithCallbackData("Доабвить задачи", $"addTaskInProject|{projectId}"));
             keyboard.AddNewRow(InlineKeyboardButton.WithCallbackData("Выполнить проект", $"completeProject|{projectId}"));
 
@@ -322,6 +340,41 @@ namespace Otus_Project_Manage
                             KeyboardTypes.CancelScenario);
 
             return new UserScenarioData(telegramMessageService.user.telegramUserId, ScenarioTypes.DeleteProject);
+        }
+
+        public async Task<UserScenarioData> RegisteredUser(ITelegramMessageService telegramMessageService, CallbackQueryData callbackData)
+        {
+            telegramMessageService.ct.ThrowIfCancellationRequested();
+
+            await telegramMessageService.SendMessageByKeyboardType(
+                            "Если хотите отменить удаление выберите команду \"/cancel\"",
+                            KeyboardTypes.CancelScenario);
+
+            return new UserScenarioData(telegramMessageService.user.telegramUserId, ScenarioTypes.RegisteredUser);
+        }
+
+        public async Task ShowProjectTasks(ITelegramMessageService telegramMessageService, CallbackQueryData callbackData)
+        {
+            telegramMessageService.ct.ThrowIfCancellationRequested();
+
+            if (!Guid.TryParse(callbackData.Argument, out Guid projectId))
+                throw new ArgumentException($"Не получилось преобразовать в Guid строку \"{callbackData.Argument}\"");
+
+            var project = await projectService.GetProjectById(projectId, telegramMessageService.ct);
+            var tasks = (await taskService.GetAllActiveTasks(telegramMessageService.ct)).Where(x => x.project.projectId == projectId).ToList();
+
+            InlineKeyboardMarkup keyboard = new InlineKeyboardMarkup();
+
+            if (tasks.Count == 0)
+            {
+                await telegramMessageService.SendMessage("Активных задач в вашем проекте нет.");
+                return;
+            }
+
+            foreach (var task in tasks)
+                keyboard.AddNewRow(InlineKeyboardButton.WithCallbackData($"{task.taskName}", $"showTask|{task.taskId}"));
+
+            await telegramMessageService.SendMessageWithKeyboard("Активные задачи вашего проекта:", keyboard);
         }
     }
 }

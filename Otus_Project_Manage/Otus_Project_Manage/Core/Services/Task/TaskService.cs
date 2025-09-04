@@ -29,11 +29,11 @@ namespace Otus_Project_Manage
             await taskRepo.UpdateTask(task, ct);
         }
 
-        public async Task DeleteTask(Guid taskId, CancellationToken ct)
+        public async Task DeleteTask(ProjectTask task, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
 
-            await taskRepo.DeleteTask(taskId, ct);
+            await taskRepo.DeleteTask(task, ct);
         }
 
         public async Task<IReadOnlyList<ProjectTask>> GetActiveTasksByTeam(UsersTeam team, CancellationToken ct)

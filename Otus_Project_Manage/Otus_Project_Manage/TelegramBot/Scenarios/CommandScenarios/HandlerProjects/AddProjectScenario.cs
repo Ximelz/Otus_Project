@@ -63,7 +63,7 @@ namespace Otus_Project_Manage
                         return userScenario.scenarioStatus;
                     case "EnterDeadline":
                         string format = "dd.MM.yyyy";
-                        if (DateTime.TryParseExact(inputMessage, format, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime deadline))
+                        if (!DateTime.TryParseExact(inputMessage, format, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime deadline))
                         {
                             await telegramMessageService.SendMessage("Введен неверный формат даты!");
                             return ScenarioStatus.InProcess;
@@ -74,7 +74,7 @@ namespace Otus_Project_Manage
                         else
                             userScenario.Data["projectDeadline"] = deadline;
 
-                        var users = (await userService.GetAllUsers(telegramMessageService.ct)).Where(x => x.project == null).ToList();
+                        var users = (await userService.GetAllUsers(telegramMessageService.ct)).Where(x => x.project == null).Where(x => x.role == UserRole.TeamLead).ToList();
 
                         foreach (var user in users)
                             keyboard.AddNewRow(InlineKeyboardButton.WithCallbackData($"{user.userName}",$"ChooseProjectManager|{user.userId}"));
@@ -112,12 +112,12 @@ namespace Otus_Project_Manage
                                            InlineKeyboardButton.WithCallbackData("Да", $"AcceptAddProject|{userId}"),
                                            InlineKeyboardButton.WithCallbackData("Нет", $"CancelAddProject|{userId}")});
 
-                        await telegramMessageService.SendMessageWithKeyboard("Вы подтверждаете создание проекта?.", keyboard);
+                        await telegramMessageService.SendMessageWithKeyboard("Вы подтверждаете создание проекта?", keyboard);
                         userScenario.currentStep = "AddProject";
                         userScenario.scenarioStatus = ScenarioStatus.InProcess;
                         return userScenario.scenarioStatus;
                     case "AddProject":
-                        if (callbackQueryData.Argument == "AcceptAddProject")
+                        if (callbackQueryData.Command == "AcceptAddProject")
                         {
                             Guid.TryParse(userScenario.Data["userId"].ToString(), out userId);
                             string projectName = userScenario.Data["projectName"].ToString();
@@ -140,7 +140,7 @@ namespace Otus_Project_Manage
                             await telegramMessageService.SendMessageByKeyboardType($"Проект \"{projectName}\" создан!", KeyboardTypes.Admin);
                             userScenario.scenarioStatus = ScenarioStatus.Completed;
                         }
-                        else if (callbackQueryData.Argument == "CancelAddProject")
+                        else if (callbackQueryData.Command == "CancelAddProject")
                         {
                             userScenario.Data.Clear();
                             await telegramMessageService.SendMessage("Вы отменили создание проекта и возвращаетесь на этап ввода имени проекта.\r\nВведите имя проекта:!");

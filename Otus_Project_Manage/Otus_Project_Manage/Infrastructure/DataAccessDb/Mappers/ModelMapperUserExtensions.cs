@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
+﻿using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -10,56 +6,63 @@ namespace Otus_Project_Manage
 {
     public static class ModelMapperUserExtensions
     {
-        public static Task<ProjectUser> MapFromModel(this ProjectUserModel userModel)
+        public static ProjectUser MapFromModel(this ProjectUserModel userModel)
         {
-            return Task.FromResult(new ProjectUser()
+            if (userModel == null)
+                return null;
+
+            return new ProjectUser()
             {
                 telegramUserId = userModel.telegramUserId,
                 userId = userModel.userId,
                 userName = userModel.userName,
-                team = userModel.team,
+                team = userModel.team.MapFromModel(),
                 role = userModel.role,
-                isAdmin = userModel.isAdmin,
-                project = userModel.project
-            });
+                isAdmin = userModel.isAdmin
+            };
         }
 
-        public static Task<ProjectUserModel> MapToModel(this ProjectUser user)
+        public static ProjectUserModel MapToModel(this ProjectUser user)
         {
-            return Task.FromResult(new ProjectUserModel()
+            if (user == null)
+                return null;
+
+            return new ProjectUserModel()
             {
                 telegramUserId = user.telegramUserId,
                 userId = user.userId,
                 userName = user.userName,
                 teamId = user.team != null ? user.team.teamId : null,
                 role = user.role,
-                isAdmin = user.isAdmin,
-                projectId = user.project != null ? user.project.projectId : Guid.Empty
-            });
+                isAdmin = user.isAdmin
+            };
         }
 
-        public async static Task<List<ProjectUser>> MapFromModelListAsync(this Task<List<ProjectUserModel>> usersModel, CancellationToken ct)
+        public static Task<List<ProjectUser>> MapFromModelListAsync(this Task<List<ProjectUserModel>> model, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
 
             List<ProjectUser> users = new List<ProjectUser>();
+            List<ProjectUserModel> usersModel = model.Result;
 
-            foreach (var userModel in usersModel.Result)
-                users.Add(await userModel.MapFromModel());
+            if (usersModel != null)
+                foreach (var userModel in usersModel)
+                    users.Add(userModel.MapFromModel());
 
-            return users;
+            return Task.FromResult(users);
         }
 
-        public async static Task<List<ProjectUserModel>> MapToModelListAsync(this Task<List<ProjectUser>> users, CancellationToken ct)
+        public static Task<List<ProjectUserModel>> MapToModelListAsync(this Task<List<ProjectUser>> users, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
 
             List<ProjectUserModel> usersModel = new List<ProjectUserModel>();
 
-            foreach (var user in users.Result)
-                usersModel.Add(await user.MapToModel());
+            if (users != null)
+                foreach (var user in users.Result)
+                    usersModel.Add(user.MapToModel());
 
-            return usersModel;
+            return Task.FromResult(usersModel);
         }
     }
 }

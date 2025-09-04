@@ -48,19 +48,19 @@ namespace Otus_Project_Manage
                 await scenarioRepository.AddScenario(new DeleteTeamScenario(userService, teamService), ct.Token);
                 await scenarioRepository.AddScenario(new RenameTeamScenario(teamService), ct.Token);
 
-                await scenarioRepository.AddScenario(new ChangeUserRoleScenario(userService), ct.Token);
+                await scenarioRepository.AddScenario(new ChangeUserRoleScenario(userService, teamService), ct.Token);
                 await scenarioRepository.AddScenario(new ChangeUserTeamScenario(userService, teamService), ct.Token);
                 await scenarioRepository.AddScenario(new DeleteUserScenario(userService), ct.Token);
                 await scenarioRepository.AddScenario(new RegisteredUserScenario(userService, teamService), ct.Token);
 
-                await scenarioRepository.AddScenario(new AddTaskScenario(taskService), ct.Token);
+                await scenarioRepository.AddScenario(new AddTaskScenario(taskService, teamService), ct.Token);
                 await scenarioRepository.AddScenario(new DeleteTaskScenario(taskService), ct.Token);
                 await scenarioRepository.AddScenario(new CompleteStageScenario(taskService), ct.Token);
                 await scenarioRepository.AddScenario(new ReturnStageScenario(taskService), ct.Token);
 
                 await scenarioRepository.AddScenario(new AddProjectScenario(projectService, userService), ct.Token);
                 await scenarioRepository.AddScenario(new DeleteProjectScenario(projectService), ct.Token);
-                await scenarioRepository.AddScenario(new AddTaskInProjectScenario(projectService, taskService), ct.Token);
+                await scenarioRepository.AddScenario(new AddTaskInProjectScenario(projectService, taskService, teamService), ct.Token);
                 await scenarioRepository.AddScenario(new CompleteProjectScenario(projectService, taskService), ct.Token);
                 var me = await bot.GetMe();
                 bot.StartReceiving(handle, receiverOptions, ct.Token);

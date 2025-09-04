@@ -21,7 +21,7 @@ namespace Otus_Project_Manage
 
             await using (var dbConn = factory.CreateDataContext())
             {
-                await dbConn.InsertAsync(project.MapToModel, token: ct);
+                await dbConn.InsertAsync(project.MapToModel(), token: ct);
             }
         }
 
@@ -51,13 +51,51 @@ namespace Otus_Project_Manage
 
             await using (var dbConn = factory.CreateDataContext())
             {
-                return (await dbConn.Projects
-                                    .LoadWith(t => t.tasks)
-                                    .LoadWith(u => u.projectManager)
-                                    .ToListAsync(ct)
-                                    .MapFromModelListAsync(ct))
-                                    .Where(predicate)
-                                    .FirstOrDefault();
+                var project = (await dbConn.Projects
+                                           .LoadWith(u => u.projectManager)
+                                           .ToListAsync(ct)
+                                           .MapFromModelListAsync(ct))
+                                           .Where(predicate)
+                                           .FirstOrDefault();
+
+                if (project == null)
+                    return null;
+
+                var task = (await dbConn.Tasks
+                                            .LoadWith(x => x.project)
+                                            .LoadWith(x => x.team)
+                                            .LoadWith(x => x.firstStage)
+                                            .ThenLoad(x => x.user)
+                                            .LoadWith(x => x.firstStage)
+                                            .ThenLoad(x => x.nextStage)
+                                            .ThenLoad(x => x.user)
+                                            .LoadWith(x => x.firstStage)
+                                            .ThenLoad(x => x.nextStage)
+                                            .ThenLoad(x => x.nextStage)
+                                            .ThenLoad(x => x.user)
+                                            .ToListAsync()
+                                            .MapFromModelListAsync(ct))
+                                            .Where(x => x.project != null)
+                                            .Where(x => x.project.projectId == project.projectId)
+                                            .FirstOrDefault();
+                if (task == null)
+                    return project;
+
+                task.firstStage.task = task;
+                task.firstStage.nextStage.task = task;
+                task.firstStage.nextStage.nextStage.task = task;
+
+                task.activeStage = task.firstStage.nextStage.nextStage;
+
+                if (task.firstStage.nextStage.status == TaskStatus.Active)
+                    task.activeStage = task.firstStage.nextStage;
+
+                if (task.firstStage.status == TaskStatus.Active)
+                    task.activeStage = task.firstStage;
+
+                project.tasks.Add(task);
+
+                return project;
             }
         }
 
@@ -67,13 +105,54 @@ namespace Otus_Project_Manage
 
             await using (var dbConn = factory.CreateDataContext())
             {
-                return (await dbConn.Projects
-                                    .LoadWith(t => t.tasks)
-                                    .LoadWith(u => u.projectManager)
-                                    .ToListAsync(ct)
-                                    .MapFromModelListAsync(ct))
-                                    .Where(predicate)
-                                    .ToList();
+                var projects = (await dbConn.Projects
+                                            .LoadWith(u => u.projectManager)
+                                            .ToListAsync(ct)
+                                            .MapFromModelListAsync(ct))
+                                            .Where(predicate)
+                                            .ToList();
+
+                if (projects == null)
+                    return null;
+
+                foreach (var project in projects)
+                {
+                    var task = (await dbConn.Tasks
+                                            .LoadWith(x => x.project)
+                                            .LoadWith(x => x.team)
+                                            .LoadWith(x => x.firstStage)
+                                            .ThenLoad(x => x.user)
+                                            .LoadWith(x => x.firstStage)
+                                            .ThenLoad(x => x.nextStage)
+                                            .ThenLoad(x => x.user)
+                                            .LoadWith(x => x.firstStage)
+                                            .ThenLoad(x => x.nextStage)
+                                            .ThenLoad(x => x.nextStage)
+                                            .ThenLoad(x => x.user)
+                                            .ToListAsync()
+                                            .MapFromModelListAsync(ct))
+                                            .Where(x => x.project != null)
+                                            .Where(x => x.project.projectId == project.projectId)
+                                            .FirstOrDefault();
+                    if (task == null)
+                        continue;
+
+                    task.firstStage.task = task;
+                    task.firstStage.nextStage.task = task;
+                    task.firstStage.nextStage.nextStage.task = task;
+
+                    task.activeStage = task.firstStage.nextStage.nextStage;
+
+                    if (task.firstStage.nextStage.status == TaskStatus.Active)
+                        task.activeStage = task.firstStage.nextStage;
+
+                    if (task.firstStage.status == TaskStatus.Active)
+                        task.activeStage = task.firstStage;
+
+                    project.tasks.Add(task);
+                }
+
+                return projects;
             }
         }
     }

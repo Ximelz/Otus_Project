@@ -11,6 +11,9 @@ namespace Otus_Project_Manage
     {
         public static Project MapFromModel(this ProjectModel projectModel)
         {
+            if (projectModel == null)
+                return null;
+
             return new Project()
             {
                 projectId = projectModel.projectId,
@@ -19,12 +22,15 @@ namespace Otus_Project_Manage
                 status = projectModel.status,
                 deadline = projectModel.deadline,
                 createdAt = projectModel.createdAt,
-                projectManager = projectModel.projectManager
+                projectManager = projectModel.projectManager.MapFromModel()
             };
         }
 
         public static ProjectModel MapToModel(this Project project)
         {
+            if (project == null)
+                return null;
+
             return new ProjectModel()
             {
                 projectId = project.projectId,
@@ -42,19 +48,23 @@ namespace Otus_Project_Manage
             ct.ThrowIfCancellationRequested();
 
             List<Project> projects = new List<Project>();
-
-            foreach (var taskModel in projectsModel.Result)
-                projects.Add(taskModel.MapFromModel());
+            
+            if (projectsModel != null)
+                foreach (var projectModel in projectsModel.Result)
+                    projects.Add(projectModel.MapFromModel());
 
             return Task.FromResult(projects);
         }
 
-        public static Task<List<ProjectModel>> MapToModelListAsync(this Task<List<Project>> projects)
+        public static Task<List<ProjectModel>> MapToModelListAsync(this Task<List<Project>> projects, CancellationToken ct)
         {
+            ct.ThrowIfCancellationRequested();
+
             List<ProjectModel> projectsModel = new List<ProjectModel>();
 
-            foreach (var project in projects.Result)
-                projectsModel.Add(project.MapToModel());
+            if (projects != null)
+                foreach (var project in projects.Result)
+                    projectsModel.Add(project.MapToModel());
 
             return Task.FromResult(projectsModel);
         }

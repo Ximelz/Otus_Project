@@ -14,7 +14,7 @@ namespace Otus_Project_Manage
         /// Id задачи.
         /// </summary>
         [Column("taskId"), PrimaryKey]
-        public Guid taskId = Guid.NewGuid();
+        public Guid taskId;
 
         /// <summary>
         /// Наименованеи задачи.
@@ -26,13 +26,13 @@ namespace Otus_Project_Manage
         /// Команда (группа) пользователя.
         /// </summary>
         [Column("teamId"), NotNull]
-        public Guid? teamId;
+        public Guid teamId;
 
         /// <summary>
-        /// Команда (группа) пользователя.
+        /// Id 1 этапа задачи
         /// </summary>
         [Column("startStageId"), NotNull]
-        public Guid? startStageId;
+        public Guid startStageId;
 
         /// <summary>
         /// Описание задачи.
@@ -44,7 +44,7 @@ namespace Otus_Project_Manage
         /// Дата создания задачи.
         /// </summary>
         [Column("createdAt"), NotNull]
-        public DateTime createdAt = DateTime.UtcNow;
+        public DateTime createdAt;
 
         /// <summary>
         /// Срок выполнения задачи.
@@ -61,25 +61,25 @@ namespace Otus_Project_Manage
         /// <summary>
         /// Id проекта.
         /// </summary>
-        [Column("projectId"), NotNull]
-        public Guid projectId;
+        [Column("projectId")]
+        public Guid? projectId;
 
         /// <summary>
         /// Проект к которому принадлежит задача.
         /// </summary>
         [Association(ThisKey = nameof(projectId), OtherKey = nameof(ProjectModel.projectId))]
-        public Project project;
+        public ProjectModel? project;
 
         /// <summary>
         /// Команда (группа) пользователя.
         /// </summary>
         [Association(ThisKey = nameof(teamId), OtherKey = nameof(UserTeamModel.teamId))]
-        public UsersTeam team;
+        public UserTeamModel team;
 
         /// <summary>
         /// Команда (группа) пользователя.
         /// </summary>
         [Association(ThisKey = nameof(startStageId), OtherKey = nameof(TaskStageModel.stageId))]
-        public TaskStage firstStage;
+        public TaskStageModel firstStage;
     }
 }

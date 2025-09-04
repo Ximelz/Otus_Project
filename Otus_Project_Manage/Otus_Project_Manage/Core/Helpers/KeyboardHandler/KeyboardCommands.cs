@@ -17,19 +17,14 @@ namespace Otus_Project_Manage
             if (user.role == UserRole.None)
                 currentCommands.Add(new BotCommand { Command = "start", Description = "Авторизация и запуск бота" });
 
-            if (user.project != null || user.isAdmin)
-            {
-                currentCommands.Add(new BotCommand("showProjects", "Показать проекты."));
-            }
-
             if (user.role == UserRole.TeamLead)
-            {
-                currentCommands.Add(new BotCommand { Command = "addteamtask", Description = "Добавление задачи моей команде." });
                 currentCommands.Add(new BotCommand { Command = "showteamtasks", Description = "Просмотр задач команды." });
-            }
 
             if (user.role != UserRole.None)
                 currentCommands.Add(new BotCommand { Command = "showmytasks", Description = "Просмотр моих задач." });
+
+            if (user.project != null)
+                currentCommands.Add(new BotCommand { Command = "showprojects", Description = "Просмотр моих задач." });
 
             currentCommands.Add(new BotCommand { Command = "info", Description = "Информация о боте." });
             currentCommands.Add(new BotCommand { Command = "help", Description = "Информация о работе с ботом." });
@@ -49,19 +44,16 @@ namespace Otus_Project_Manage
                 return new ReplyKeyboardMarkup(
                 new[]
                 {
-                    new KeyboardButton("/addTeamTask"),
-                    new KeyboardButton("/showTeamTasks"),
-                    new KeyboardButton("/showMyTasks")
+                    new KeyboardButton("/addteamtask"),
+                    new KeyboardButton("/showteamtasks"),
+                    new KeyboardButton("/showmytasks")
                 });
 
             if (keyboardType == KeyboardTypes.TeamLead)
                 return new ReplyKeyboardMarkup(
                 new[]
                 {
-                    new KeyboardButton("/addProjectTask"),
-                    new KeyboardButton("/showProjectTasks"),
-                    new KeyboardButton("/addTaskToProject"),
-                    new KeyboardButton("/showMyTasks")
+                    new KeyboardButton("/showmytasks")
                 });
 
             if (keyboardType == KeyboardTypes.Admin)
@@ -71,13 +63,14 @@ namespace Otus_Project_Manage
                     new KeyboardButton("/registerUser"),
                     new KeyboardButton("/showUsers"),
                     new KeyboardButton("/showTeams"),
+                    new KeyboardButton("/showAllprojects"),
                     new KeyboardButton("/exitAdminConsole")
                 });
 
             if (keyboardType == KeyboardTypes.CancelScenario)
                 return new ReplyKeyboardMarkup(new[] { new KeyboardButton("/cancel") });
 
-            return new ReplyKeyboardMarkup(new[] { new KeyboardButton("/showMyTasks") });
+            return new ReplyKeyboardMarkup(new[] { new KeyboardButton("/showmytasks") });
         }
 
         public static KeyboardTypes GetKeyoardTypeByRole(UserRole role)
