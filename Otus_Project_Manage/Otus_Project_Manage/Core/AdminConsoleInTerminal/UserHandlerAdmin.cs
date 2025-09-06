@@ -374,9 +374,6 @@ namespace Otus_Project_Manage
 
             while (true)
             {
-                if (chooseParams.Count == 3)
-                    break;
-
                 indexParams.Clear();
 
                 Console.WriteLine("Выберите изменяемый параметр пользователя.\r\n" +
@@ -414,6 +411,18 @@ namespace Otus_Project_Manage
                 }
 
                 chooseParams.Add(userChangeParams[indexParams[parametrIndex - 1]]);
+
+                if (chooseParams.Count == 3)
+                    break;
+
+                Console.WriteLine("Хотите выбрать еще 1 функцию?\r\n" +
+                                  "Введите \"Да\" для выбора еще одной команды и любую другую строку для перехода к обработке выбранных функций.");
+
+
+                inputStr = Console.ReadLine();
+
+                if (inputStr == "Да")
+                    break;
             }
 
             for (int i = 0; i < 3; i++)
