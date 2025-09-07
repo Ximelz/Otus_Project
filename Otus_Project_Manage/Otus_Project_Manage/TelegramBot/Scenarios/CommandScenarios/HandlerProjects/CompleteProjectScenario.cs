@@ -61,7 +61,6 @@ namespace Otus_Project_Manage
 
                         project.status = ProjectStatus.Complete;
                         project.projectManager.project = null;
-                        project.projectManager = null;
 
                         foreach (var task in project.tasks)
                         {

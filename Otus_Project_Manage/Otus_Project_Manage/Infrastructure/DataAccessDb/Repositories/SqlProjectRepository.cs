@@ -55,6 +55,7 @@ namespace Otus_Project_Manage
                                            .LoadWith(u => u.projectManager)
                                            .ToListAsync(ct)
                                            .MapFromModelListAsync(ct))
+                                           .Where(x => x.status != ProjectStatus.Complete)
                                            .Where(predicate)
                                            .FirstOrDefault();
 
@@ -109,6 +110,7 @@ namespace Otus_Project_Manage
                                             .LoadWith(u => u.projectManager)
                                             .ToListAsync(ct)
                                             .MapFromModelListAsync(ct))
+                                            .Where(x => x.status != ProjectStatus.Complete)
                                             .Where(predicate)
                                             .ToList();
 

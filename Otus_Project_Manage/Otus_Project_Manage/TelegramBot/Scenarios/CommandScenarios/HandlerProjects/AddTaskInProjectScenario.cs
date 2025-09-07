@@ -272,6 +272,7 @@ namespace Otus_Project_Manage
                             var team = await teamService.GetTeamById(teamId, telegramMessageService.ct);
                             newTask.activeStage = newTask.firstStage;
                             newTask.project = currentProject;
+                            newTask.team = team;
 
                             newTask.firstStage = new TaskStage()
                             {

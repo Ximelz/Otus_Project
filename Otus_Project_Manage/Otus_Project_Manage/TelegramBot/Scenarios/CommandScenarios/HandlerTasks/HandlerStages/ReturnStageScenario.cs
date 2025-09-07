@@ -96,7 +96,7 @@ namespace Otus_Project_Manage
 
                             task = await taskService.GetTasksById(taskId, telegramMessageService.ct);
 
-                            if (task.firstStage.stageId == stageId)
+                            if (task.firstStage.nextStage.stageId == stageId)
                             {
                                 task.firstStage.status = TaskStatus.Active;
                                 task.firstStage.nextStage.status = TaskStatus.Active;

@@ -361,7 +361,7 @@ namespace Otus_Project_Manage
                 throw new ArgumentException($"Не получилось преобразовать в Guid строку \"{callbackData.Argument}\"");
 
             var project = await projectService.GetProjectById(projectId, telegramMessageService.ct);
-            var tasks = (await taskService.GetAllActiveTasks(telegramMessageService.ct)).Where(x => x.project.projectId == projectId).ToList();
+            var tasks = (await taskService.GetAllActiveTasks(telegramMessageService.ct)).Where(x => x.project != null).Where(x => x.project.projectId == projectId).ToList();
 
             InlineKeyboardMarkup keyboard = new InlineKeyboardMarkup();
 

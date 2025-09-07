@@ -46,7 +46,7 @@ namespace Otus_Project_Manage
                         await StartAdminScenarios(ct.Token);
                         break;
                     case "4":
-                        Console.WriteLine("Выход из консоли администратора.");
+                        Console.Clear();
                         return;
                     case "5":
                         Console.WriteLine("Остановка работы бота.");
