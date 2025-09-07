@@ -11,6 +11,14 @@
     <FileVersion>1.0.0.0</FileVersion>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Remove="Core\DbModels\**" />
+    <Compile Remove="SQL_Scripts\**" />
+    <EmbeddedResource Remove="Core\DbModels\**" />
+    <EmbeddedResource Remove="SQL_Scripts\**" />
+    <None Remove="Core\DbModels\**" />
+    <None Remove="SQL_Scripts\**" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="IndexRange" Version="1.0.3" />
     <PackageReference Include="linq2db.PostgreSQL" Version="5.4.1" />
     <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="8.0.0" />
@@ -32,9 +40,5 @@
     <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.4" />
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />
     <PackageReference Include="Telegram.Bot" Version="22.5.1" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Core\DbModels\" />
-    <Folder Include="SQL_Scripts\" />
   </ItemGroup>
 </Project>

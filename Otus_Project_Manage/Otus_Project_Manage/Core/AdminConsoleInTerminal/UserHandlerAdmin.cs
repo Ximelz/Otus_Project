@@ -421,7 +421,7 @@ namespace Otus_Project_Manage
 
                 inputStr = Console.ReadLine();
 
-                if (inputStr == "Да")
+                if (inputStr != "Да")
                     break;
             }
 
