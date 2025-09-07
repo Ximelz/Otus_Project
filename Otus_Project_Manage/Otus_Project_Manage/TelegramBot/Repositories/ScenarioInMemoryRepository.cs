@@ -36,20 +36,6 @@ namespace Otus_Project_Manage
             return Task.CompletedTask;
         }
 
-        public Task DeleteScenario(Func<IScenario, bool> predicate, CancellationToken ct)
-        {
-            ct.ThrowIfCancellationRequested();
-
-            var scenario = scenarios.Where(predicate).FirstOrDefault();
-
-            if (scenario == null)
-                throw new ArgumentException("Данные о сценраии не найдены по указанной выборке!");
-
-            scenarios.Remove(scenario);
-
-            return Task.CompletedTask;
-        }
-
         public Task<UserScenarioData> GetUserScenarioData(Func<UserScenarioData, bool> predicate, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();

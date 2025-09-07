@@ -16,6 +16,7 @@ namespace Otus_Project_Manage
             Console.WriteLine("Введите пароль от БД:");
             string inputStr = Console.ReadLine();
             string sqlConn = $"Host=localhost;Database=TelegramBotProjectManager;Username=postgres;Password={inputStr};Port=5432";
+            Console.Clear();
 
             var token = Environment.GetEnvironmentVariable("TELEGRAM_BOT_TOKEN", EnvironmentVariableTarget.User) ?? throw new ArgumentException("Отсутствует токен телеграмм бота!");
             var bot = new TelegramBotClient(token);

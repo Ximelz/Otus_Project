@@ -91,7 +91,7 @@ namespace Otus_Project_Manage
 
                 if (cancelFlag)
                 {
-                    Console.WriteLine("Регистрация пользователя закончена.");
+                    Console.WriteLine("Регистрация пользователя отменена.");
                     break;
                 }
 
@@ -111,13 +111,8 @@ namespace Otus_Project_Manage
 
                 if (userTeam == null)
                 {
-                    Console.WriteLine("Команда не была выбрана!\r\n" +
-                                      "Хотите зарегистрировать пользователя без команды?" +
-                                      "Введите \"Да\" для регистрации пользователя без команды," +
-                                      "любая другая строка для начала процесса регистрации пользователя заново.");
-                    inputStr = Console.ReadLine();
-                    if (inputStr != "Да")
-                        continue;
+                    Console.WriteLine("Команда не была выбрана!\r\n");
+                    continue;
                 }
 
                 Console.WriteLine("Хотите выдать права администратора пользователю?\r\n" +

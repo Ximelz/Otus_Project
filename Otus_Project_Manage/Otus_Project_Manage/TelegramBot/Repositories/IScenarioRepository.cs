@@ -26,13 +26,6 @@ namespace Otus_Project_Manage
         Task AddScenario(IScenario scenario, CancellationToken ct);
 
         /// <summary>
-        /// Метод удаление сценария обработки команд.
-        /// </summary>
-        /// <param name="predicate">Условие выборки для удаления.</param>
-        /// <param name="ct">Токен отмены.</param>
-        Task DeleteScenario(Func<IScenario, bool> predicate, CancellationToken ct);
-
-        /// <summary>
         /// Метод получения данных о сценарии на основании входящего условия.
         /// </summary>
         /// <param name="predicate">Условие выборки данных пользователя о сценарии.</param>

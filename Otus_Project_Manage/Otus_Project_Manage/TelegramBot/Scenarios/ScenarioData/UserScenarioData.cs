@@ -11,7 +11,6 @@ namespace Otus_Project_Manage
         public UserScenarioData(long userId, ScenarioTypes scenarioType)
         {
             this.userId = userId;
-            scenarioId = Guid.NewGuid();
             currentStep = "Start";
             scenarioStatus = ScenarioStatus.Start;
             this.scenarioType = scenarioType;
@@ -21,7 +20,6 @@ namespace Otus_Project_Manage
         public ScenarioStatus scenarioStatus;
         public ScenarioTypes scenarioType;
         public string currentStep;
-        public Guid scenarioId;
         public Dictionary<string, object> Data;
     }
 }
